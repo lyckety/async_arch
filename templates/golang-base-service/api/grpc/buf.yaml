@@ -1,0 +1,9 @@
+version: v1
+name: buf.build/rdp-ru/grpc
+lint:
+  allow_comment_ignores: true
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE
