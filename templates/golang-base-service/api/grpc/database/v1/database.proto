@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package database.v1;
+
+option go_package = "github.com/lyckety/golang-base-service/pkg/database/v1;database";
+
+import "google/protobuf/timestamp.proto";
+
+service DatabaseService {
+    rpc CreateOrUpdateUser(CreateOrUpdateUserRequest) returns (CreateOrUpdateUserResponse) {}
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+    rpc GetAllUsers(GetAllUsersRequest) returns (GetAllUsersResponse) {}
+    rpc GetUserByName(GetUserByNameRequest) returns (GetUserByNameResponse) {}
+}
+
+message CreateOrUpdateUserRequest {
+    User user = 1;
+}
+
+message CreateOrUpdateUserResponse {}
+
+message DeleteUserRequest {
+    string username = 1;
+}
+
+message DeleteUserResponse {}
+
+message GetAllUsersRequest {}
+
+message GetAllUsersResponse {
+    repeated User users = 1;
+}
+
+message GetUserByNameRequest {
+    string username = 1;
+}
+
+message GetUserByNameResponse {
+    User user = 1;
+}
+
+message User {
+    string username = 1;
+    string email = 2;
+    google.protobuf.Timestamp date_of_birth = 3;
+}
