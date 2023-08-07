@@ -1,5 +1,9 @@
 # Homework 0
 
+## Схема
+
+![architecture diagram](./scheme_aTES.jpg)
+
 ## Сервисы
 
 ### Task Tracker Service
