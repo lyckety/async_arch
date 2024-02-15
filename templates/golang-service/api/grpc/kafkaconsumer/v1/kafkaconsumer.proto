@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package kafkaconsumer.v1;
+
+option go_package = "github.com/lyckety/async_arch/golang-service/pkg/grpc/kafkaconsumer/v1;kafkaconsumer";
+
+service KafkaConsumerService {
+    rpc SubscribeTopic(SubscribeTopicRequest) returns (stream SubscribeTopicResponse);
+}
+
+message SubscribeTopicRequest {
+    string topic = 1;
+}
+
+message SubscribeTopicResponse {
+    string key = 1;
+    string value = 2;
+    string topic = 3;
+    uint64 timestamp = 4;
+}

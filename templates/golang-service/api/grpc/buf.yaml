@@ -1,0 +1,8 @@
+version: v1
+name: buf.build/lyckety/grpc
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE
