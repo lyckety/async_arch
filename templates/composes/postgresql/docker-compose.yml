@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  postgresql:
+    image: 'bitnami/postgresql:16.2.0'
+    user: 0:0
+    ports:
+      - 55432:5432
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
+      - POSTGRESQL_DATABASE=users
+    volumes:
+      - ./volumes/postgres/data:/bitnami/postgresql
