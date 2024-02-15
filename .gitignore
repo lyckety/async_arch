@@ -18,4 +18,11 @@
 # vendor/
 
 # Go workspace file
-go.work
+go.work*
+# Docker-compose volumes
+/templates/composes/**/volumes
+
+*.vscode
+*.code-workspace
+
+workbook/
