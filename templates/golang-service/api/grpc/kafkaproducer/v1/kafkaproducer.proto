@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package kafkaproducer.v1;
+
+option go_package = "github.com/lyckety/async_arch/golang-service/pkg/grpc/kafkaproducer/v1;kafkaproducer";
+
+service KafkaProducerService {
+    rpc Send(SendRequest) returns (SendResponse) {}
+}
+
+message SendRequest {
+    string key = 1;
+    string value = 2;
+    string topic = 3;
+    uint64 timestamp = 4;
+}
+
+message SendResponse {}
