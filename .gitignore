@@ -24,5 +24,6 @@ go.work*
 
 *.vscode
 *.code-workspace
+.DS_Store
 
 workbook/
