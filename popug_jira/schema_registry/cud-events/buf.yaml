@@ -1,0 +1,11 @@
+version: v1
+name: buf.build/lyckety/cud-events
+breaking:
+  use:
+    - WIRE_JSON
+lint:
+  use:
+    - DEFAULT
+deps:
+  - buf.build/lyckety/users-api
+  - buf.build/lyckety/task-tracker-api
