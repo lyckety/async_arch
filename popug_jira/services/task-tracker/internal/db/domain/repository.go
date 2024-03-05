@@ -24,7 +24,5 @@ type TaskRepository interface {
 
 type UserRepository interface {
 	CreateOrUpdateUser(ctx context.Context, user *User) (uuid.UUID, error)
-	CreateUser(ctx context.Context, user *User) (uuid.UUID, error)
-	UpdateUser(ctx context.Context, user *User) (uuid.UUID, error)
 	GetUsersByRole(ctx context.Context, role UserRoleType) ([]*User, error)
 }

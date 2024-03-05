@@ -155,7 +155,7 @@ func (s *TaskTrackerService) TaskComplete(
 	ctx context.Context,
 	req *pbV1Tasks.TaskCompleteRequest,
 ) (*pbV1Tasks.TaskCompleteResponse, error) {
-	userID := ctx.Value(interceptors.ContextKeyUserID).(string)
+	userID := ctx.Value(interceptors.ContextKeyUserID.String()).(string)
 
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
@@ -261,19 +261,6 @@ func (s *TaskTrackerService) GetListOpenedTasksForMe(
 	return &pbV1Tasks.GetListOpenedTasksForMeResponse{
 		Task: rpcTasks,
 	}, nil
-}
-
-func (s *TaskTrackerService) convertRPCTaskStatusToDB(rpcTaskStatus pbV1Task.TaskStatus) domain.TaskStatus {
-	switch rpcTaskStatus {
-	case pbV1Task.TaskStatus_TASK_STATUS_OPENED:
-		return domain.TaskOpened
-	case pbV1Task.TaskStatus_TASK_STATUS_COMPLETED:
-		return domain.TaskCompleted
-	case pbV1Task.TaskStatus_TASK_STATUS_UNSPECIFIED:
-		fallthrough
-	default:
-		return domain.TaskUnknowStatus
-	}
 }
 
 func (s *TaskTrackerService) getRandomUser(users []*domain.User) *domain.User {
