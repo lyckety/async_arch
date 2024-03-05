@@ -1,0 +1,105 @@
+version: "3.8"
+
+services:
+  # Пока не работает. При запуске контейнера падают оба сервиса. TODO: fix me!
+  # auth:
+  #   build:
+  #     context: ../services/auth/
+  #     dockerfile: Dockerfile
+  #   container_name: auth
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   environment:
+  #     - DB_HOST=postgresql
+  #     - DB_PORT=5432
+  #     - DB_NAME=auth
+  #     - DB_USERNAME=auth
+  #     - DB_PASSWORD=auth
+  #     - BROKER_URLS=kafka:9092
+  #     - MB_PARTITION=0
+  #     - MB_TOPIC=users
+  #   ports:
+  #     - '60051:50051'
+  #   depends_on:
+  #     - postgresql
+  #     - kafka
+
+  # task-tracker:
+  #   build:
+  #     context: ../services/task-tracker/
+  #     dockerfile: Dockerfile
+  #   container_name: task-tracker
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   environment:
+  #     - DB_HOST=postgresql
+  #     - DB_PORT=5432
+  #     - DB_NAME=tasks
+  #     - DB_USERNAME=tasks
+  #     - DB_PASSWORD=tasks
+  #     - BROKER_URLS=kafka:9092
+  #     - USERS_CUD_PARTITION=0
+  #     - USERS_CUD_TOPIC=users
+  #     - USERS_CUD_GROUP_ID=task-tracker
+  #     - TASKS_CUD_TOPIC=tasks
+  #     - TASKS_CUD_PARTITION=0
+  #   ports:
+  #     - '60052:50051'
+  #   depends_on:
+  #     - postgresql
+  #     - kafka
+
+  postgresql:
+    image: 'bitnami/postgresql:16.2.0'
+    user: 0:0
+    container_name: postgresql
+    ports:
+      - 55432:5432
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
+      - POSTGRESQL_DATABASE=postgres
+    volumes:
+      - ./volumes/postgres/data:/bitnami/postgresql
+
+  kafka:
+    image: docker.io/bitnami/kafka:latest
+    ports:
+      # - "19092:9092"
+      # needed for external access
+      - "9094:9094"
+    volumes:
+      - "./volumes/kafka-broker:/bitnami"
+    environment:
+      - BITNAMI_DEBUG=true
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_BROKER_ID=1
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_NODE_ID=1
+
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      # needed for external access (else external clients get resolve problems)
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=BROKER://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=BROKER://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_INTER_BROKER_LISTENER_NAME=BROKER
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    restart: on-failure
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8082:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    volumes:
+      - ./volumes/kafka-ui/config.yml:/etc/kafkaui/dynamic_config.yaml
+    depends_on:
+      - kafka
+
+volumes:
+  kafka_data:
+    driver: local
