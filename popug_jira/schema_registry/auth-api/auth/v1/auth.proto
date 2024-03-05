@@ -5,14 +5,14 @@ package auth.v1;
 option go_package = "github.com/lyckety/async_arch/services/popug_jira/services/auth/pkg/grpc/auth/v1;auth";
 
 service AuthService {
-    rpc Login(LoginRequest) returns (LoginResponse) {};
+    rpc UserLogin(UserLoginRequest) returns (UserLoginResponse) {};
 }
 
-message LoginRequest {
+message UserLoginRequest {
     string username = 1;
     string password = 2;
 }
 
-message LoginResponse {
+message UserLoginResponse {
     string token = 1;
 }

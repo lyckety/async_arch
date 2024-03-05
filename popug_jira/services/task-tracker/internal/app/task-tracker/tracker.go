@@ -35,10 +35,10 @@ func New(
 	}
 }
 
-func (s *TaskTrackerService) CreateTask(
+func (s *TaskTrackerService) TaskCreate(
 	ctx context.Context,
-	req *pbV1Tasks.CreateTaskRequest,
-) (*pbV1Tasks.CreateTaskResponse, error) {
+	req *pbV1Tasks.TaskCreateRequest,
+) (*pbV1Tasks.TaskCreateResponse, error) {
 	newTaskDB := &domain.Task{
 		Description: req.GetDescription(),
 		Status:      domain.TaskOpened,
@@ -94,15 +94,15 @@ func (s *TaskTrackerService) CreateTask(
 		log.Debugf("success sent cud event (created task): %v!", eventsMsg)
 	}()
 
-	return &pbV1Tasks.CreateTaskResponse{
+	return &pbV1Tasks.TaskCreateResponse{
 		Id: taskID.String(),
 	}, nil
 }
 
-func (s *TaskTrackerService) RandomReassignOpenedTasks(
+func (s *TaskTrackerService) TasksShuffleReasign(
 	ctx context.Context,
-	req *pbV1Tasks.RandomReassignOpenedTasksRequest,
-) (*pbV1Tasks.RandomReassignOpenedTasksResponse, error) {
+	req *pbV1Tasks.TasksShuffleReasignRequest,
+) (*pbV1Tasks.TasksShuffleReasignResponse, error) {
 	tasksToUsers, err := s.dbIns.RandomlyUpdateAssignedOpenedTasks(ctx)
 	if err != nil {
 		return nil, status.Errorf(
@@ -145,7 +145,7 @@ func (s *TaskTrackerService) RandomReassignOpenedTasks(
 		log.Debugf("success sent cud event (random tasks reassigned)!")
 	}()
 
-	return &pbV1Tasks.RandomReassignOpenedTasksResponse{
+	return &pbV1Tasks.TasksShuffleReasignResponse{
 			TaskToAssignedUser: rpcResponse,
 		},
 		nil

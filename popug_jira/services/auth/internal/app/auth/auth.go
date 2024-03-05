@@ -24,10 +24,10 @@ func New(db domain.Repository, jwt JWTManager) *AuthService {
 	}
 }
 
-func (a *AuthService) Login(
+func (a *AuthService) UserLogin(
 	ctx context.Context,
-	req *pbV1.LoginRequest,
-) (*pbV1.LoginResponse, error) {
+	req *pbV1.UserLoginRequest,
+) (*pbV1.UserLoginResponse, error) {
 	userInfo, err := a.dbIns.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		log.Errorf("a.dbIns.GetUserByUsername(ctx, %s): %s", req.Username, err.Error())
@@ -55,7 +55,7 @@ func (a *AuthService) Login(
 		)
 	}
 
-	return &pbV1.LoginResponse{
+	return &pbV1.UserLoginResponse{
 		Token: tokenString,
 	}, nil
 }
