@@ -70,7 +70,7 @@ func main() {
 
 	errGr.Go(
 		func() error {
-			waitForSignal(grCtx, cancel)
+			waitForStopSignal(grCtx, cancel)
 
 			return nil
 		},
@@ -82,7 +82,7 @@ func main() {
 
 }
 
-func waitForSignal(ctx context.Context, cancel context.CancelFunc) {
+func waitForStopSignal(ctx context.Context, cancel context.CancelFunc) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -107,20 +107,4 @@ func initLogger(level logger.Level) {
 			FullTimestamp: true,
 		},
 	)
-}
-
-func waitForStopSignal(ctx context.Context) {
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case sig := <-sigs:
-			if sig == syscall.SIGINT || sig == syscall.SIGTERM {
-				return
-			}
-		}
-	}
 }
