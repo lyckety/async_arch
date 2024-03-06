@@ -17,7 +17,7 @@ import (
 --------------------------- Tasks ---------------------------
 */
 
-func (i *Instance) CreateTask(ctx context.Context, task *domain.Task) (uuid.UUID, error) {
+func (i *Instance) CreateTask(ctx context.Context, task *domain.Task) (*domain.Task, error) {
 	if err := i.database.WithContext(ctx).Create(task).Error; err != nil {
 		log.Errorf(
 			"i.database.WithContext(ctx).Create(%v): %s",
@@ -25,12 +25,12 @@ func (i *Instance) CreateTask(ctx context.Context, task *domain.Task) (uuid.UUID
 			err.Error(),
 		)
 
-		return uuid.Nil, fmt.Errorf("error create task  %v in database: %w", task, err)
+		return nil, fmt.Errorf("error create task  %v in database: %w", task, err)
 	}
 
 	log.Debugf("success create task %v in database!", task)
 
-	return task.ID, nil
+	return task, nil
 }
 
 func (i *Instance) TaskCompleteByUser(

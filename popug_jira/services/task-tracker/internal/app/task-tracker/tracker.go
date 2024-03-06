@@ -63,7 +63,7 @@ func (s *TaskTrackerService) TaskCreate(
 
 	newTaskDB.UserID = assignedUser.ID
 
-	taskID, err := s.dbIns.CreateTask(ctx, newTaskDB)
+	createdTask, err := s.dbIns.CreateTask(ctx, newTaskDB)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -73,17 +73,17 @@ func (s *TaskTrackerService) TaskCreate(
 
 	rpcTaskInfo := &pbV1Task.Task{
 		Description:  req.GetDescription(),
-		AssignedUser: assignedUser.ID.String(),
+		AssignedUser: string(assignedUser.ID.String()),
 		Status:       pbV1Task.TaskStatus_TASK_STATUS_OPENED,
 	}
 
 	eventsMsg := &pbV1TaskEvents.TaskEvent{
 		EventType: pbV1TaskEvents.TaskCUDEventType_TASK_CUD_EVENT_TYPE_CREATED,
 		Task: &pbV1Task.TaskWithID{
-			Id:   taskID.String(),
+			Id:   string(createdTask.PublicID.String()),
 			Task: rpcTaskInfo,
 		},
-		Timestamp: newTaskDB.CreatedAt.Unix(), // TODO: FIX ME !!!! надо проверить, что везде он проставляется со значением из БД
+		Timestamp: newTaskDB.CreatedAt.Unix(),
 	}
 
 	go func() {
@@ -95,7 +95,7 @@ func (s *TaskTrackerService) TaskCreate(
 	}()
 
 	return &pbV1Tasks.TaskCreateResponse{
-		Id: taskID.String(),
+		Id: string(createdTask.PublicID.String()),
 	}, nil
 }
 
