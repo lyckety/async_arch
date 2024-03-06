@@ -16,7 +16,7 @@ import (
 type ExtendedClaims struct {
 	jwt.StandardClaims
 	Username string `json:"username"`
-	ID       string `json:"id"`
+	PublicID string `json:"id"`
 	Role     string `json:"role"`
 }
 
@@ -37,7 +37,7 @@ func (j *JWTManager) GenerateToken(username, id, role string) (string, error) {
 
 	claims := &ExtendedClaims{
 		Username: username,
-		ID:       id,
+		PublicID: id,
 		Role:     role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/lyckety/async_arch/popug_jira/services/auth/internal/db/domain"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -47,17 +46,17 @@ func (i *Instance) GetUserByUsername(ctx context.Context, userName string) (*dom
 	return &user, nil
 }
 
-func (i *Instance) CreateUser(ctx context.Context, user *domain.User) (uuid.UUID, error) {
+func (i *Instance) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
 	result := i.database.WithContext(ctx).Create(&user)
 
 	if result.Error != nil {
-		return uuid.Nil, fmt.Errorf("error create user %s: %w", user.Username, result.Error)
+		return nil, fmt.Errorf("error create user %s: %w", user.Username, result.Error)
 	}
 
-	return user.ID, nil
+	return user, nil
 }
 
-func (i *Instance) UpdateUser(ctx context.Context, user *domain.User) (uuid.UUID, error) {
+func (i *Instance) UpdateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
 	existedUser := *user
 
 	result := i.database.
@@ -70,7 +69,7 @@ func (i *Instance) UpdateUser(ctx context.Context, user *domain.User) (uuid.UUID
 	if result.Error != nil {
 		log.Errorf("error update user %s: %s", user.Username, result.Error)
 
-		return uuid.Nil, fmt.Errorf("error update user %s: %w", user.Username, result.Error)
+		return nil, fmt.Errorf("error update user %s: %w", user.Username, result.Error)
 	}
 
 	if err := i.database.
@@ -84,8 +83,8 @@ func (i *Instance) UpdateUser(ctx context.Context, user *domain.User) (uuid.UUID
 		).Error; err != nil {
 		log.Errorf("error update user %s: %s", user.Username, result.Error)
 
-		return uuid.Nil, fmt.Errorf("error update user %s: %w", user.Username, result.Error)
+		return nil, fmt.Errorf("error update user %s: %w", user.Username, result.Error)
 	}
 
-	return existedUser.ID, nil
+	return user, nil
 }

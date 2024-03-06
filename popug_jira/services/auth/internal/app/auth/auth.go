@@ -45,7 +45,7 @@ func (a *AuthService) UserLogin(
 		)
 	}
 
-	tokenString, err := a.jwtManager.GenerateToken(req.Username, userInfo.ID.String(), string(userInfo.Role))
+	tokenString, err := a.jwtManager.GenerateToken(req.Username, userInfo.PublicID.String(), string(userInfo.Role))
 	if err != nil {
 		log.Errorf("jwt.NewWithClaims(...): %s", err.Error())
 
@@ -61,5 +61,5 @@ func (a *AuthService) UserLogin(
 }
 
 type JWTManager interface {
-	GenerateToken(username, id, role string) (string, error)
+	GenerateToken(username, publicID, role string) (string, error)
 }
