@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	DefaultConnectTimeout = 3 * time.Second
-	DefaultReadTimeout    = 3 * time.Second
-	DefaultWriteTimeout   = 3 * time.Second
+	DefaultConnectTimeout = 5 * time.Second
+	DefaultReadTimeout    = 5 * time.Second
+	DefaultWriteTimeout   = 5 * time.Second
 	DefaultMaxAttempts    = 3
 	DefaultNumPartition   = 1
 	DefaultPartition      = 0
@@ -75,24 +75,12 @@ func (p *MBProducer) checkLeaderExist(topicName string, numChecks int) error {
 
 func (p *MBProducer) SendMessage(ctx context.Context, msg kafka.Message) error {
 	if err := p.Client.WriteMessages(ctx, msg); err != nil {
-		if err.Error() == "context canceled" {
-			logrus.Debug("p.producer.WriteMessages(...): context canceled")
-
-			return nil
-		}
-
 		if errors.Is(err, kafka.LeaderNotAvailable) || strings.Contains(err.Error(), "Leader Not Available") {
 			if err := p.checkLeaderExist(msg.Topic, 3); err != nil {
 				return fmt.Errorf("p.checkLeaderExist(...): %w", err)
 			}
 
 			if err := p.Client.WriteMessages(ctx, msg); err != nil {
-				if err.Error() == "context canceled" {
-					logrus.Debug("p.producer.WriteMessages(...): context canceled")
-
-					return nil
-				}
-
 				logrus.Errorf(
 					"Producer failed send message: Key: %q, Value: %q, Topic: %q, Date: %s",
 					msg.Key,

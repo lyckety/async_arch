@@ -73,8 +73,10 @@ func (s *UsersService) CreateUser(
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(ctx, eventsMsg); err != nil {
+		if err := s.producerEvents.Send(context.Background(), eventsMsg); err != nil {
 			log.Errorf("failed send event for create or update user %v: %s", req.User, err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (user created): %v", eventsMsg)
@@ -125,8 +127,10 @@ func (s *UsersService) UpdateUser(
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(ctx, eventsMsg); err != nil {
+		if err := s.producerEvents.Send(context.Background(), eventsMsg); err != nil {
 			log.Errorf("failed send event for create or update user %v: %s", req.User, err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (user updated): %v", eventsMsg)

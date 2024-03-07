@@ -72,6 +72,9 @@ func (i *Instance) UpdateUser(ctx context.Context, user *domain.User) (*domain.U
 		return nil, fmt.Errorf("error update user %s: %w", user.Username, result.Error)
 	}
 
+	user.PublicID = existedUser.PublicID
+	user.ID = existedUser.ID
+
 	if err := i.database.
 		Model(user).
 		Where(
@@ -85,6 +88,8 @@ func (i *Instance) UpdateUser(ctx context.Context, user *domain.User) (*domain.U
 
 		return nil, fmt.Errorf("error update user %s: %w", user.Username, result.Error)
 	}
+
+	fmt.Printf("@@@@@ %v", user)
 
 	return user, nil
 }

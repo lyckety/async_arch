@@ -25,7 +25,7 @@ func JWTUnary(
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		if info.FullMethod == "/auth.v1.AuthService/Login" {
+		if info.FullMethod == "/auth.v1.AuthService/UserLogin" {
 			return handler(ctx, req)
 		}
 

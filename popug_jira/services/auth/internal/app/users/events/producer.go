@@ -47,6 +47,8 @@ func (s *CUDEventSender) Send(
 	}
 
 	if err := s.client.SendMessage(ctx, eventMsg); err != nil {
+		logrus.Errorf("kafkaClient.SendMessages(...): %s", err.Error())
+
 		return fmt.Errorf("kafkaClient.SendMessages(...): %s", err.Error())
 	}
 
