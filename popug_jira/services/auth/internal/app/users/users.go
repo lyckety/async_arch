@@ -6,9 +6,9 @@ import (
 
 	events "github.com/lyckety/async_arch/popug_jira/services/auth/internal/app/users/events"
 	"github.com/lyckety/async_arch/popug_jira/services/auth/internal/db/domain"
+	pbV1User "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/api/grpc/user/v1"
+	pbV1Users "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/api/grpc/users/v1"
 	pbV1Events "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/grpc/authevents/v1"
-	pbV1User "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/grpc/user/v1"
-	pbV1Users "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/grpc/users/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
