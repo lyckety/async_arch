@@ -11,4 +11,7 @@ type Config struct {
 
 	TopicCUDTasks     string
 	PartitionCUDTasks int
+
+	TopicBETasks     string
+	PartitionBETasks int
 }

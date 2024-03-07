@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/lyckety/async_arch/popug_jira/services/auth/internal/db/domain"
-	pbV1 "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/grpc/auth/v1"
+	pbV1 "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/api/grpc/auth/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

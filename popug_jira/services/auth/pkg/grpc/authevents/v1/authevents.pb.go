@@ -7,7 +7,7 @@
 package autheventsv1
 
 import (
-	v1 "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/grpc/user/v1"
+	v1 "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/api/grpc/user/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

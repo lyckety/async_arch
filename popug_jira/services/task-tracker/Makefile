@@ -8,6 +8,9 @@ TARGET := task-tracker
 run:
 	go run cmd/$(TARGET)/main.go
 
+buf-generate:
+	buf generate .
+
 build: download
 	go build -o bin/$(TARGET) ./cmd/$(TARGET)/
 
