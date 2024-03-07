@@ -7,7 +7,7 @@
 package taskeventsv1
 
 import (
-	v1 "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/grpc/task/v1"
+	v1 "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/api/grpc/task/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

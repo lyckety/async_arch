@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package tasktracker.v1;
+
+import "task/v1/task.proto";
+
+service TaskTrackerService {
+    rpc TaskCreate(TaskCreateRequest) returns (TaskCreateResponse) {}
+    rpc TaskComplete (TaskCompleteRequest) returns (TaskCompleteResponse) {}
+    rpc TasksShuffleReasign (TasksShuffleReasignRequest) returns (TasksShuffleReasignResponse) {}
+    rpc GetListOpenedTasksForMe (GetListOpenedTasksForMeRequest) returns (GetListOpenedTasksForMeResponse) {}
+}
+
+message TaskCreateRequest {
+    string description = 1;
+}
+
+message TaskCreateResponse {
+    string id = 1;
+}
+
+message TaskCompleteRequest {
+    string id = 1;
+}
+
+message TaskCompleteResponse {}
+
+message TasksShuffleReasignRequest {}
+
+message TasksShuffleReasignResponse {
+    repeated TaskIDAndAssignedUserID task_to_assigned_user = 1;
+}
+
+message GetListOpenedTasksForMeRequest {}
+
+message GetListOpenedTasksForMeResponse {
+    repeated task.v1.TaskWithID task = 1;
+}
+
+message TaskIDAndAssignedUserID {
+    string task_id = 1;
+    string assigned_user_id = 2;
+}

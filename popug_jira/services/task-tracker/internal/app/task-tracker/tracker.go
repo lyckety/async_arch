@@ -8,9 +8,9 @@ import (
 	tasksEvents "github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/app/events/tasks"
 	"github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/app/interceptors"
 	"github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/db/domain"
-	pbV1Task "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/grpc/task/v1"
+	pbV1Task "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/api/grpc/task/v1"
+	pbV1Tasks "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/api/grpc/tasktracker/v1"
 	pbV1TaskEvents "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/grpc/taskevents/v1"
-	pbV1Tasks "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/grpc/tasktracker/v1"
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"

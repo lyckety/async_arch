@@ -11,7 +11,7 @@ import (
 	"github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/app/interceptors"
 	tasksSrv "github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/app/task-tracker"
 	"github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/db/domain"
-	pbV1Tasks "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/grpc/tasktracker/v1"
+	pbV1Tasks "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/api/grpc/tasktracker/v1"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
