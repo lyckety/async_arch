@@ -12,7 +12,7 @@ type Repository interface {
 }
 
 type TaskRepository interface {
-	CreateTask(context.Context, *Task) (uuid.UUID, error)
+	CreateTask(context.Context, *Task) (*Task, error)
 	TaskCompleteByUser(ctx context.Context, userID uuid.UUID, taskID uuid.UUID) (*Task, error)
 	RandomlyUpdateAssignedOpenedTasks(ctx context.Context) (map[*Task]*User, error)
 	GetAllTasksByUserAndStatus(
@@ -24,7 +24,5 @@ type TaskRepository interface {
 
 type UserRepository interface {
 	CreateOrUpdateUser(ctx context.Context, user *User) (uuid.UUID, error)
-	CreateUser(ctx context.Context, user *User) (uuid.UUID, error)
-	UpdateUser(ctx context.Context, user *User) (uuid.UUID, error)
 	GetUsersByRole(ctx context.Context, role UserRoleType) ([]*User, error)
 }

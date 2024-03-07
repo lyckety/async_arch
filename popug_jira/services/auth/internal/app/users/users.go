@@ -36,6 +36,7 @@ func (s *UsersService) CreateUser(
 ) (*pbV1Users.CreateUserResponse, error) {
 	userDB := &domain.User{
 		ID:        [16]byte{},
+		PublicID:  [16]byte{},
 		FirstName: req.User.GetFirstName(),
 		LastName:  req.User.GetLastName(),
 		Username:  req.User.GetUsername(),
@@ -53,7 +54,7 @@ func (s *UsersService) CreateUser(
 
 	userDB.Role = userRoleDB
 
-	id, err := s.dbIns.CreateUser(ctx, userDB)
+	createdUser, err := s.dbIns.CreateUser(ctx, userDB)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -64,7 +65,7 @@ func (s *UsersService) CreateUser(
 	eventsMsg := &pbV1Events.AuthEvent{
 		EventType: pbV1Events.AuthCUDEventType_AUTH_CUD_EVENT_TYPE_CREATE,
 		User: &pbV1User.UserWithID{
-			Id:   id.String(),
+			Id:   createdUser.PublicID.String(),
 			User: req.GetUser(),
 		},
 
@@ -72,14 +73,16 @@ func (s *UsersService) CreateUser(
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(ctx, eventsMsg); err != nil {
+		if err := s.producerEvents.Send(context.Background(), eventsMsg); err != nil {
 			log.Errorf("failed send event for create or update user %v: %s", req.User, err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (user created): %v", eventsMsg)
 	}()
 
-	return &pbV1Users.CreateUserResponse{Id: id.String()}, nil
+	return &pbV1Users.CreateUserResponse{Id: createdUser.PublicID.String()}, nil
 }
 
 func (s *UsersService) UpdateUser(
@@ -88,6 +91,7 @@ func (s *UsersService) UpdateUser(
 ) (*pbV1Users.UpdateUserResponse, error) {
 	userDB := &domain.User{
 		ID:        [16]byte{},
+		PublicID:  [16]byte{},
 		FirstName: req.User.GetFirstName(),
 		LastName:  req.User.GetLastName(),
 		Username:  req.User.GetUsername(),
@@ -104,7 +108,7 @@ func (s *UsersService) UpdateUser(
 
 	userDB.Role = userRoleDB
 
-	id, err := s.dbIns.UpdateUser(ctx, userDB)
+	updatedUser, err := s.dbIns.UpdateUser(ctx, userDB)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -115,7 +119,7 @@ func (s *UsersService) UpdateUser(
 	eventsMsg := &pbV1Events.AuthEvent{
 		EventType: pbV1Events.AuthCUDEventType_AUTH_CUD_EVENT_TYPE_UPDATE,
 		User: &pbV1User.UserWithID{
-			Id:   id.String(),
+			Id:   updatedUser.PublicID.String(),
 			User: req.GetUser(),
 		},
 
@@ -123,14 +127,16 @@ func (s *UsersService) UpdateUser(
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(ctx, eventsMsg); err != nil {
+		if err := s.producerEvents.Send(context.Background(), eventsMsg); err != nil {
 			log.Errorf("failed send event for create or update user %v: %s", req.User, err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (user updated): %v", eventsMsg)
 	}()
 
-	return &pbV1Users.UpdateUserResponse{Id: id.String()}, nil
+	return &pbV1Users.UpdateUserResponse{Id: updatedUser.PublicID.String()}, nil
 }
 
 func (s *UsersService) convertRPCRoleToDBRole(rpcRole pbV1User.UserRole) domain.UserRoleType {

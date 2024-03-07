@@ -18,9 +18,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TaskTrackerServiceClient interface {
-	CreateTask(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*CreateTaskResponse, error)
+	TaskCreate(ctx context.Context, in *TaskCreateRequest, opts ...grpc.CallOption) (*TaskCreateResponse, error)
 	TaskComplete(ctx context.Context, in *TaskCompleteRequest, opts ...grpc.CallOption) (*TaskCompleteResponse, error)
-	RandomReassignOpenedTasks(ctx context.Context, in *RandomReassignOpenedTasksRequest, opts ...grpc.CallOption) (*RandomReassignOpenedTasksResponse, error)
+	TasksShuffleReasign(ctx context.Context, in *TasksShuffleReasignRequest, opts ...grpc.CallOption) (*TasksShuffleReasignResponse, error)
 	GetListOpenedTasksForMe(ctx context.Context, in *GetListOpenedTasksForMeRequest, opts ...grpc.CallOption) (*GetListOpenedTasksForMeResponse, error)
 }
 
@@ -32,9 +32,9 @@ func NewTaskTrackerServiceClient(cc grpc.ClientConnInterface) TaskTrackerService
 	return &taskTrackerServiceClient{cc}
 }
 
-func (c *taskTrackerServiceClient) CreateTask(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*CreateTaskResponse, error) {
-	out := new(CreateTaskResponse)
-	err := c.cc.Invoke(ctx, "/tasktracker.v1.TaskTrackerService/CreateTask", in, out, opts...)
+func (c *taskTrackerServiceClient) TaskCreate(ctx context.Context, in *TaskCreateRequest, opts ...grpc.CallOption) (*TaskCreateResponse, error) {
+	out := new(TaskCreateResponse)
+	err := c.cc.Invoke(ctx, "/tasktracker.v1.TaskTrackerService/TaskCreate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,9 +50,9 @@ func (c *taskTrackerServiceClient) TaskComplete(ctx context.Context, in *TaskCom
 	return out, nil
 }
 
-func (c *taskTrackerServiceClient) RandomReassignOpenedTasks(ctx context.Context, in *RandomReassignOpenedTasksRequest, opts ...grpc.CallOption) (*RandomReassignOpenedTasksResponse, error) {
-	out := new(RandomReassignOpenedTasksResponse)
-	err := c.cc.Invoke(ctx, "/tasktracker.v1.TaskTrackerService/RandomReassignOpenedTasks", in, out, opts...)
+func (c *taskTrackerServiceClient) TasksShuffleReasign(ctx context.Context, in *TasksShuffleReasignRequest, opts ...grpc.CallOption) (*TasksShuffleReasignResponse, error) {
+	out := new(TasksShuffleReasignResponse)
+	err := c.cc.Invoke(ctx, "/tasktracker.v1.TaskTrackerService/TasksShuffleReasign", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +72,9 @@ func (c *taskTrackerServiceClient) GetListOpenedTasksForMe(ctx context.Context, 
 // All implementations must embed UnimplementedTaskTrackerServiceServer
 // for forward compatibility
 type TaskTrackerServiceServer interface {
-	CreateTask(context.Context, *CreateTaskRequest) (*CreateTaskResponse, error)
+	TaskCreate(context.Context, *TaskCreateRequest) (*TaskCreateResponse, error)
 	TaskComplete(context.Context, *TaskCompleteRequest) (*TaskCompleteResponse, error)
-	RandomReassignOpenedTasks(context.Context, *RandomReassignOpenedTasksRequest) (*RandomReassignOpenedTasksResponse, error)
+	TasksShuffleReasign(context.Context, *TasksShuffleReasignRequest) (*TasksShuffleReasignResponse, error)
 	GetListOpenedTasksForMe(context.Context, *GetListOpenedTasksForMeRequest) (*GetListOpenedTasksForMeResponse, error)
 	mustEmbedUnimplementedTaskTrackerServiceServer()
 }
@@ -83,14 +83,14 @@ type TaskTrackerServiceServer interface {
 type UnimplementedTaskTrackerServiceServer struct {
 }
 
-func (UnimplementedTaskTrackerServiceServer) CreateTask(context.Context, *CreateTaskRequest) (*CreateTaskResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateTask not implemented")
+func (UnimplementedTaskTrackerServiceServer) TaskCreate(context.Context, *TaskCreateRequest) (*TaskCreateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TaskCreate not implemented")
 }
 func (UnimplementedTaskTrackerServiceServer) TaskComplete(context.Context, *TaskCompleteRequest) (*TaskCompleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TaskComplete not implemented")
 }
-func (UnimplementedTaskTrackerServiceServer) RandomReassignOpenedTasks(context.Context, *RandomReassignOpenedTasksRequest) (*RandomReassignOpenedTasksResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RandomReassignOpenedTasks not implemented")
+func (UnimplementedTaskTrackerServiceServer) TasksShuffleReasign(context.Context, *TasksShuffleReasignRequest) (*TasksShuffleReasignResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TasksShuffleReasign not implemented")
 }
 func (UnimplementedTaskTrackerServiceServer) GetListOpenedTasksForMe(context.Context, *GetListOpenedTasksForMeRequest) (*GetListOpenedTasksForMeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetListOpenedTasksForMe not implemented")
@@ -108,20 +108,20 @@ func RegisterTaskTrackerServiceServer(s grpc.ServiceRegistrar, srv TaskTrackerSe
 	s.RegisterService(&TaskTrackerService_ServiceDesc, srv)
 }
 
-func _TaskTrackerService_CreateTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateTaskRequest)
+func _TaskTrackerService_TaskCreate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TaskCreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TaskTrackerServiceServer).CreateTask(ctx, in)
+		return srv.(TaskTrackerServiceServer).TaskCreate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tasktracker.v1.TaskTrackerService/CreateTask",
+		FullMethod: "/tasktracker.v1.TaskTrackerService/TaskCreate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskTrackerServiceServer).CreateTask(ctx, req.(*CreateTaskRequest))
+		return srv.(TaskTrackerServiceServer).TaskCreate(ctx, req.(*TaskCreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -144,20 +144,20 @@ func _TaskTrackerService_TaskComplete_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TaskTrackerService_RandomReassignOpenedTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RandomReassignOpenedTasksRequest)
+func _TaskTrackerService_TasksShuffleReasign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TasksShuffleReasignRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TaskTrackerServiceServer).RandomReassignOpenedTasks(ctx, in)
+		return srv.(TaskTrackerServiceServer).TasksShuffleReasign(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tasktracker.v1.TaskTrackerService/RandomReassignOpenedTasks",
+		FullMethod: "/tasktracker.v1.TaskTrackerService/TasksShuffleReasign",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TaskTrackerServiceServer).RandomReassignOpenedTasks(ctx, req.(*RandomReassignOpenedTasksRequest))
+		return srv.(TaskTrackerServiceServer).TasksShuffleReasign(ctx, req.(*TasksShuffleReasignRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -188,16 +188,16 @@ var TaskTrackerService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*TaskTrackerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateTask",
-			Handler:    _TaskTrackerService_CreateTask_Handler,
+			MethodName: "TaskCreate",
+			Handler:    _TaskTrackerService_TaskCreate_Handler,
 		},
 		{
 			MethodName: "TaskComplete",
 			Handler:    _TaskTrackerService_TaskComplete_Handler,
 		},
 		{
-			MethodName: "RandomReassignOpenedTasks",
-			Handler:    _TaskTrackerService_RandomReassignOpenedTasks_Handler,
+			MethodName: "TasksShuffleReasign",
+			Handler:    _TaskTrackerService_TasksShuffleReasign_Handler,
 		},
 		{
 			MethodName: "GetListOpenedTasksForMe",

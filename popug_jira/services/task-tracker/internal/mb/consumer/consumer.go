@@ -27,7 +27,6 @@ type MBConsumer struct {
 	brokers   []string
 	partition int
 	topic     string
-	groupID   string
 }
 
 func New(

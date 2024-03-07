@@ -14,9 +14,16 @@ import (
 )
 
 const (
-	jwtSecretKey     = "09876543210"
-	ContextKeyUserID = "user_id"
+	jwtSecretKey = "09876543210"
 )
+
+type ContextKeyType string
+
+const ContextKeyUserID ContextKeyType = "user_id"
+
+func (c ContextKeyType) String() string {
+	return string(c)
+}
 
 type ExtendedClaims struct {
 	jwt.StandardClaims
@@ -52,7 +59,7 @@ func JWTUnary(
 
 	userID := claims.ID
 
-	ctx = context.WithValue(ctx, ContextKeyUserID, userID)
+	ctx = context.WithValue(ctx, ContextKeyUserID, userID) //nolint: staticcheck
 
 	return handler(ctx, req)
 }

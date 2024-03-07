@@ -2,7 +2,6 @@ package postgresql
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
 
@@ -18,7 +17,7 @@ import (
 --------------------------- Tasks ---------------------------
 */
 
-func (i *Instance) CreateTask(ctx context.Context, task *domain.Task) (uuid.UUID, error) {
+func (i *Instance) CreateTask(ctx context.Context, task *domain.Task) (*domain.Task, error) {
 	if err := i.database.WithContext(ctx).Create(task).Error; err != nil {
 		log.Errorf(
 			"i.database.WithContext(ctx).Create(%v): %s",
@@ -26,12 +25,12 @@ func (i *Instance) CreateTask(ctx context.Context, task *domain.Task) (uuid.UUID
 			err.Error(),
 		)
 
-		return uuid.Nil, fmt.Errorf("error create task  %v in database: %w", task, err)
+		return nil, fmt.Errorf("error create task  %v in database: %w", task, err)
 	}
 
 	log.Debugf("success create task %v in database!", task)
 
-	return task.ID, nil
+	return task, nil
 }
 
 func (i *Instance) TaskCompleteByUser(
@@ -123,44 +122,45 @@ func (i *Instance) RandomlyUpdateAssignedOpenedTasks(
 ) (map[*domain.Task]*domain.User, error) {
 	updatedTasks := make(map[*domain.Task]*domain.User)
 
-	err := i.database.Transaction(func(tx *gorm.DB) error {
-		var workersDB = make([]domain.User, 0)
+	err := i.database.WithContext(ctx).
+		Transaction(func(tx *gorm.DB) error {
+			var workersDB = make([]domain.User, 0)
 
-		if err := tx.Where("role = ?", domain.WorkerRole).
-			Find(&workersDB).Error; err != nil {
+			if err := tx.Where("role = ?", domain.WorkerRole).
+				Find(&workersDB).Error; err != nil {
 
-			return fmt.Errorf("error get worker user: %w", err)
-		}
-
-		if len(workersDB) == 0 {
-			return nil
-		}
-
-		var tasksDB = make([]domain.Task, 0)
-
-		if err := tx.
-			Where("status != ?", domain.TaskCompleted).
-			Find(&tasksDB).Error; err != nil {
-
-			return fmt.Errorf("error get not completed tasks ids: %w", err)
-		}
-
-		for _, task := range tasksDB {
-			newWorker := workersDB[rand.Intn(len(workersDB))]
-			task.UserID = newWorker.ID
-
-			if err := tx.Model(&domain.Task{}).
-				Where("id = ? AND status != ?", task.ID, domain.TaskCompleted).
-				Updates(&task).Error; err != nil {
-
-				return fmt.Errorf("error assign random worker user to task: %w", err)
+				return fmt.Errorf("error get worker user: %w", err)
 			}
 
-			updatedTasks[&task] = &newWorker
-		}
+			if len(workersDB) == 0 {
+				return nil
+			}
 
-		return nil
-	})
+			var tasksDB = make([]domain.Task, 0)
+
+			if err := tx.
+				Where("status != ?", domain.TaskCompleted).
+				Find(&tasksDB).Error; err != nil {
+
+				return fmt.Errorf("error get not completed tasks ids: %w", err)
+			}
+
+			for _, task := range tasksDB {
+				newWorker := workersDB[rand.Intn(len(workersDB))]
+				task.UserID = newWorker.ID
+
+				if err := tx.Model(&domain.Task{}).
+					Where("id = ? AND status != ?", task.ID, domain.TaskCompleted).
+					Updates(&task).Error; err != nil {
+
+					return fmt.Errorf("error assign random worker user to task: %w", err)
+				}
+
+				updatedTasks[&task] = &newWorker
+			}
+
+			return nil
+		})
 	if err != nil {
 		return nil, fmt.Errorf("error random assign users to tasks: %w", err)
 	}
@@ -211,18 +211,11 @@ func (i *Instance) CreateOrUpdateUser(ctx context.Context, user *domain.User) (u
 	return user.ID, nil
 }
 
-func (i *Instance) CreateUser(ctx context.Context, user *domain.User) (uuid.UUID, error) {
-	return uuid.Nil, errors.New("unimplemented CreateUser()")
-}
-
-func (i *Instance) UpdateUser(ctx context.Context, user *domain.User) (uuid.UUID, error) {
-	return uuid.Nil, errors.New("unimplemented UpdateUser()")
-}
-
 func (i *Instance) GetUsersByRole(ctx context.Context, role domain.UserRoleType) ([]*domain.User, error) {
 	var users []*domain.User
 
-	if err := i.database.WithContext(ctx).Where("role = ?", role).Find(&users).Error; err != nil {
+	if err := i.database.WithContext(ctx).
+		Where("role = ?", role).Find(&users).Error; err != nil {
 		log.Errorf(
 			"i.database.WithContext(ctx).Where(role = %s).Find(&users): %s",
 			role,

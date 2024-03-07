@@ -63,9 +63,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	errGr.Go(
 		func() error {
-			select {
-			case <-grCtx.Done():
-			}
+			<-grCtx.Done()
 
 			if err := a.stopListen(); err != nil {
 				return err

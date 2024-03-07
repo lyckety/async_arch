@@ -16,7 +16,8 @@ const (
 )
 
 type Task struct {
-	ID uuid.UUID `gorm:"type:uuid;default:gen_random_uuid()"`
+	ID       uuid.UUID `gorm:"type:uuid;default:gen_random_uuid()"`
+	PublicID uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();not null;unique"`
 
 	UserID uuid.UUID `gorm:"type:uuid"`
 
@@ -43,7 +44,7 @@ const (
 )
 
 type User struct {
-	ID uuid.UUID `gorm:"type:uuid;"`
+	ID uuid.UUID `gorm:"type:uuid;not null;unique"`
 
 	FirstName string `gorm:"not null"`
 	LastName  string `gorm:"not null"`

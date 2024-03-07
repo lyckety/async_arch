@@ -24,10 +24,10 @@ func New(db domain.Repository, jwt JWTManager) *AuthService {
 	}
 }
 
-func (a *AuthService) Login(
+func (a *AuthService) UserLogin(
 	ctx context.Context,
-	req *pbV1.LoginRequest,
-) (*pbV1.LoginResponse, error) {
+	req *pbV1.UserLoginRequest,
+) (*pbV1.UserLoginResponse, error) {
 	userInfo, err := a.dbIns.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		log.Errorf("a.dbIns.GetUserByUsername(ctx, %s): %s", req.Username, err.Error())
@@ -45,7 +45,7 @@ func (a *AuthService) Login(
 		)
 	}
 
-	tokenString, err := a.jwtManager.GenerateToken(req.Username, userInfo.ID.String(), string(userInfo.Role))
+	tokenString, err := a.jwtManager.GenerateToken(req.Username, userInfo.PublicID.String(), string(userInfo.Role))
 	if err != nil {
 		log.Errorf("jwt.NewWithClaims(...): %s", err.Error())
 
@@ -55,11 +55,11 @@ func (a *AuthService) Login(
 		)
 	}
 
-	return &pbV1.LoginResponse{
+	return &pbV1.UserLoginResponse{
 		Token: tokenString,
 	}, nil
 }
 
 type JWTManager interface {
-	GenerateToken(username, id, role string) (string, error)
+	GenerateToken(username, publicID, role string) (string, error)
 }

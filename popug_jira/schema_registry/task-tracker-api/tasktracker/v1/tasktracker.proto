@@ -5,17 +5,17 @@ package tasktracker.v1;
 import "task/v1/task.proto";
 
 service TaskTrackerService {
-    rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse) {}
+    rpc TaskCreate(TaskCreateRequest) returns (TaskCreateResponse) {}
     rpc TaskComplete (TaskCompleteRequest) returns (TaskCompleteResponse) {}
-    rpc RandomReassignOpenedTasks (RandomReassignOpenedTasksRequest) returns (RandomReassignOpenedTasksResponse) {}
+    rpc TasksShuffleReasign (TasksShuffleReasignRequest) returns (TasksShuffleReasignResponse) {}
     rpc GetListOpenedTasksForMe (GetListOpenedTasksForMeRequest) returns (GetListOpenedTasksForMeResponse) {}
 }
 
-message CreateTaskRequest {
+message TaskCreateRequest {
     string description = 1;
 }
 
-message CreateTaskResponse {
+message TaskCreateResponse {
     string id = 1;
 }
 
@@ -25,9 +25,9 @@ message TaskCompleteRequest {
 
 message TaskCompleteResponse {}
 
-message RandomReassignOpenedTasksRequest {}
+message TasksShuffleReasignRequest {}
 
-message RandomReassignOpenedTasksResponse {
+message TasksShuffleReasignResponse {
     repeated TaskIDAndAssignedUserID task_to_assigned_user = 1;
 }
 

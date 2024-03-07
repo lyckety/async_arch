@@ -23,7 +23,6 @@ type App struct {
 	grpcServer *grpc.Server
 
 	usersCUDEventer *usersEvents.UserCUDEventProcessor
-	taskCUDSender   *tasksEvents.TaskCUDEventSender
 }
 
 func New(cfg *Config, db domain.Repository) *App {
@@ -83,9 +82,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	errGr.Go(
 		func() error {
-			select {
-			case <-grCtx.Done():
-			}
+			<-grCtx.Done()
 
 			if err := a.stopListen(); err != nil {
 				return err

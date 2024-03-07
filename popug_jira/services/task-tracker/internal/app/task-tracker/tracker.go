@@ -35,10 +35,10 @@ func New(
 	}
 }
 
-func (s *TaskTrackerService) CreateTask(
+func (s *TaskTrackerService) TaskCreate(
 	ctx context.Context,
-	req *pbV1Tasks.CreateTaskRequest,
-) (*pbV1Tasks.CreateTaskResponse, error) {
+	req *pbV1Tasks.TaskCreateRequest,
+) (*pbV1Tasks.TaskCreateResponse, error) {
 	newTaskDB := &domain.Task{
 		Description: req.GetDescription(),
 		Status:      domain.TaskOpened,
@@ -63,7 +63,7 @@ func (s *TaskTrackerService) CreateTask(
 
 	newTaskDB.UserID = assignedUser.ID
 
-	taskID, err := s.dbIns.CreateTask(ctx, newTaskDB)
+	createdTask, err := s.dbIns.CreateTask(ctx, newTaskDB)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -73,36 +73,38 @@ func (s *TaskTrackerService) CreateTask(
 
 	rpcTaskInfo := &pbV1Task.Task{
 		Description:  req.GetDescription(),
-		AssignedUser: assignedUser.ID.String(),
+		AssignedUser: string(assignedUser.ID.String()),
 		Status:       pbV1Task.TaskStatus_TASK_STATUS_OPENED,
 	}
 
 	eventsMsg := &pbV1TaskEvents.TaskEvent{
 		EventType: pbV1TaskEvents.TaskCUDEventType_TASK_CUD_EVENT_TYPE_CREATED,
 		Task: &pbV1Task.TaskWithID{
-			Id:   taskID.String(),
+			Id:   string(createdTask.PublicID.String()),
 			Task: rpcTaskInfo,
 		},
-		Timestamp: newTaskDB.CreatedAt.Unix(), // TODO: FIX ME !!!! надо проверить, что везде он проставляется со значением из БД
+		Timestamp: newTaskDB.CreatedAt.Unix(),
 	}
 
 	go func() {
 		if err := s.producerEvents.Send(ctx, eventsMsg); err != nil {
 			log.Errorf("failed send event for create task %v: %s", rpcTaskInfo, err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (created task): %v!", eventsMsg)
 	}()
 
-	return &pbV1Tasks.CreateTaskResponse{
-		Id: taskID.String(),
+	return &pbV1Tasks.TaskCreateResponse{
+		Id: string(createdTask.PublicID.String()),
 	}, nil
 }
 
-func (s *TaskTrackerService) RandomReassignOpenedTasks(
+func (s *TaskTrackerService) TasksShuffleReasign(
 	ctx context.Context,
-	req *pbV1Tasks.RandomReassignOpenedTasksRequest,
-) (*pbV1Tasks.RandomReassignOpenedTasksResponse, error) {
+	req *pbV1Tasks.TasksShuffleReasignRequest,
+) (*pbV1Tasks.TasksShuffleReasignResponse, error) {
 	tasksToUsers, err := s.dbIns.RandomlyUpdateAssignedOpenedTasks(ctx)
 	if err != nil {
 		return nil, status.Errorf(
@@ -140,12 +142,14 @@ func (s *TaskTrackerService) RandomReassignOpenedTasks(
 	go func() {
 		if err := s.producerEvents.Send(ctx, cudEvents...); err != nil {
 			log.Errorf("failed send event for random reassigned tasks: %s", err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (random tasks reassigned)!")
 	}()
 
-	return &pbV1Tasks.RandomReassignOpenedTasksResponse{
+	return &pbV1Tasks.TasksShuffleReasignResponse{
 			TaskToAssignedUser: rpcResponse,
 		},
 		nil
@@ -155,7 +159,7 @@ func (s *TaskTrackerService) TaskComplete(
 	ctx context.Context,
 	req *pbV1Tasks.TaskCompleteRequest,
 ) (*pbV1Tasks.TaskCompleteResponse, error) {
-	userID := ctx.Value(interceptors.ContextKeyUserID).(string)
+	userID := ctx.Value(interceptors.ContextKeyUserID.String()).(string)
 
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
@@ -203,6 +207,8 @@ func (s *TaskTrackerService) TaskComplete(
 	go func() {
 		if err := s.producerEvents.Send(ctx, cudEvent); err != nil {
 			log.Errorf("failed send event for complete task %q: %s", cudEvent, err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (task copleted): %v", cudEvent)
@@ -261,19 +267,6 @@ func (s *TaskTrackerService) GetListOpenedTasksForMe(
 	return &pbV1Tasks.GetListOpenedTasksForMeResponse{
 		Task: rpcTasks,
 	}, nil
-}
-
-func (s *TaskTrackerService) convertRPCTaskStatusToDB(rpcTaskStatus pbV1Task.TaskStatus) domain.TaskStatus {
-	switch rpcTaskStatus {
-	case pbV1Task.TaskStatus_TASK_STATUS_OPENED:
-		return domain.TaskOpened
-	case pbV1Task.TaskStatus_TASK_STATUS_COMPLETED:
-		return domain.TaskCompleted
-	case pbV1Task.TaskStatus_TASK_STATUS_UNSPECIFIED:
-		fallthrough
-	default:
-		return domain.TaskUnknowStatus
-	}
 }
 
 func (s *TaskTrackerService) getRandomUser(users []*domain.User) *domain.User {
