@@ -89,6 +89,8 @@ func (s *TaskTrackerService) TaskCreate(
 	go func() {
 		if err := s.producerEvents.Send(ctx, eventsMsg); err != nil {
 			log.Errorf("failed send event for create task %v: %s", rpcTaskInfo, err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (created task): %v!", eventsMsg)
@@ -140,6 +142,8 @@ func (s *TaskTrackerService) TasksShuffleReasign(
 	go func() {
 		if err := s.producerEvents.Send(ctx, cudEvents...); err != nil {
 			log.Errorf("failed send event for random reassigned tasks: %s", err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (random tasks reassigned)!")
@@ -203,6 +207,8 @@ func (s *TaskTrackerService) TaskComplete(
 	go func() {
 		if err := s.producerEvents.Send(ctx, cudEvent); err != nil {
 			log.Errorf("failed send event for complete task %q: %s", cudEvent, err.Error())
+
+			return
 		}
 
 		log.Debugf("success sent cud event (task copleted): %v", cudEvent)

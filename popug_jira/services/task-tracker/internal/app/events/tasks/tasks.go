@@ -52,7 +52,7 @@ func (s *TaskCUDEventSender) Send(
 		msgs[i] = eventMsg
 	}
 
-	if err := s.client.SendMessages(ctx, msgs...); err != nil {
+	if err := s.client.SendMessages(context.Background(), msgs...); err != nil {
 		return fmt.Errorf("kafkaClient.SendMessages(...): %s", err.Error())
 	}
 
