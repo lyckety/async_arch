@@ -52,6 +52,8 @@ func main() {
 			PartitionCUDUsers: cfg.GetUsersCUDPartition(),
 			TopicCUDTasks:     cfg.GetTasksCUDTopicName(),
 			PartitionCUDTasks: cfg.GetTasksCUDPartition(),
+			TopicBETasks:      cfg.GetTasksBETopicName(),
+			PartitionBETasks:  cfg.GetTasksBEPartition(),
 		},
 		database,
 	)

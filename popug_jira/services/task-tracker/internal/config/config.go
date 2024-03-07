@@ -23,12 +23,16 @@ type EnvSettings struct {
 	LogLevel        string `env:"LOG_LEVEL" env-default:"info" env-description:"log level: trace, debug, info, warn, error, fatal, panic"` //nolint:lll
 
 	// Kafka settings
-	BrokerURLs        string `env:"BROKER_URLS" env-default:"127.0.0.1:19093,127.0.0.1:29093,127.0.0.1:39093" env-description:"kafka broker urls: host1:port,host2:port,host3:port"` //nolint:lll
-	UsersCUDTopic     string `env:"USERS_CUD_TOPIC" env-required:"true" env-description:"topic name for fetch users cud events"`                                                     //nolint:lll
-	UsersCUDPartition int    `env:"USERS_CUD_PARTITION" env-default:"0" env-description:"partition number for fetch users cud events"`                                               //nolint:lll
+	BrokerURLs string `env:"BROKER_URLS" env-default:"127.0.0.1:19093,127.0.0.1:29093,127.0.0.1:39093" env-description:"kafka broker urls: host1:port,host2:port,host3:port"` //nolint:lll
+
+	UsersCUDTopic     string `env:"USERS_CUD_TOPIC" env-required:"true" env-description:"topic name for fetch users cud events"`       //nolint:lll
+	UsersCUDPartition int    `env:"USERS_CUD_PARTITION" env-default:"0" env-description:"partition number for fetch users cud events"` //nolint:lll
 	UsersCUDGroupID   string `env:"USERS_CUD_GROUP_ID" env-default:"task-tracker" env-description:"group id for fetch users cud events"`
-	TasksCUDTopic     string `env:"TASKS_CUD_TOPIC" env-required:"true" env-description:"topic name for produce tasks cud events"`       //nolint:lll
-	TasksCUDPartition int    `env:"TASKS_CUD_PARTITION" env-default:"0" env-description:"partition number for produce tasks cud events"` //nolint:lll
+
+	TasksCUDTopic     string `env:"TASKS_CUD_TOPIC" env-required:"true" env-description:"topic name for produce tasks cud events"`           //nolint:lll
+	TasksCUDPartition int    `env:"TASKS_CUD_PARTITION" env-default:"0" env-description:"partition number for produce tasks cud events"`     //nolint:lll
+	TasksBETopic      string `env:"TASKS_BE_TOPIC" env-required:"true" env-description:"topic name for produce tasks business events"`       //nolint:lll
+	TasksBEPartition  int    `env:"TASKS_BE_PARTITION" env-default:"0" env-description:"partition number for produce tasks business events"` //nolint:lll
 
 	// Database settings
 	DBHost            string `env:"DB_HOST" env-default:"localhost" env-description:"ip or domain name database host"`                            //nolint:lll
@@ -144,6 +148,14 @@ func (c *Config) GetTasksCUDPartition() int {
 
 func (c *Config) GetTasksCUDTopicName() string {
 	return c.env.TasksCUDTopic
+}
+
+func (c *Config) GetTasksBEPartition() int {
+	return c.env.TasksBEPartition
+}
+
+func (c *Config) GetTasksBETopicName() string {
+	return c.env.TasksBETopic
 }
 
 func (c *Config) GetDBHost() string {

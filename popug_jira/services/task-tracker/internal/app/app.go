@@ -40,7 +40,13 @@ func New(cfg *Config, db domain.Repository) *App {
 		cfg.PartitionCUDTasks,
 	)
 
-	tasksService := tasksSrv.New(db, tasksCUDEvents)
+	tasksBusinessEvents := tasksEvents.New(
+		cfg.Brokers,
+		cfg.TopicBETasks,
+		cfg.PartitionBETasks,
+	)
+
+	tasksService := tasksSrv.New(db, tasksCUDEvents, tasksBusinessEvents)
 
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.JWTUnary),

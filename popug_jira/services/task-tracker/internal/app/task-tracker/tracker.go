@@ -22,16 +22,19 @@ type TaskTrackerService struct {
 
 	dbIns domain.Repository
 
-	producerEvents *tasksEvents.TaskCUDEventSender
+	producerCUDEvents      *tasksEvents.TaskCUDEventSender
+	producerBusinessEvents *tasksEvents.TaskCUDEventSender
 }
 
 func New(
 	db domain.Repository,
-	eventSender *tasksEvents.TaskCUDEventSender,
+	cudSender *tasksEvents.TaskCUDEventSender,
+	businessSender *tasksEvents.TaskCUDEventSender,
 ) *TaskTrackerService {
 	return &TaskTrackerService{
-		dbIns:          db,
-		producerEvents: eventSender,
+		dbIns:                  db,
+		producerCUDEvents:      cudSender,
+		producerBusinessEvents: businessSender,
 	}
 }
 
@@ -87,13 +90,23 @@ func (s *TaskTrackerService) TaskCreate(
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(ctx, eventsMsg); err != nil {
-			log.Errorf("failed send event for create task %v: %s", rpcTaskInfo, err.Error())
+		if err := s.producerCUDEvents.Send(ctx, eventsMsg); err != nil {
+			log.Errorf("failed send cud event for create task %v: %s", rpcTaskInfo, err.Error())
 
 			return
 		}
 
 		log.Debugf("success sent cud event (created task): %v!", eventsMsg)
+	}()
+
+	go func() {
+		if err := s.producerBusinessEvents.Send(ctx, eventsMsg); err != nil {
+			log.Errorf("failed send business event for create task %v: %s", rpcTaskInfo, err.Error())
+
+			return
+		}
+
+		log.Debugf("success sent business event (created task): %v!", eventsMsg)
 	}()
 
 	return &pbV1Tasks.TaskCreateResponse{
@@ -114,7 +127,7 @@ func (s *TaskTrackerService) TasksShuffleReasign(
 	}
 
 	rpcResponse := make([]*pbV1Tasks.TaskIDAndAssignedUserID, len(tasksToUsers))
-	cudEvents := make([]*pbV1TaskEvents.TaskEvent, len(tasksToUsers))
+	events := make([]*pbV1TaskEvents.TaskEvent, len(tasksToUsers))
 
 	cnt := 0
 	for reassignedTask := range tasksToUsers {
@@ -123,7 +136,7 @@ func (s *TaskTrackerService) TasksShuffleReasign(
 			AssignedUserId: reassignedTask.UserID.String(),
 		}
 
-		cudEvents[cnt] = &pbV1TaskEvents.TaskEvent{
+		events[cnt] = &pbV1TaskEvents.TaskEvent{
 			EventType: pbV1TaskEvents.TaskCUDEventType_TASK_CUD_EVENT_TYPE_ASSIGNED,
 			Task: &pbV1Task.TaskWithID{
 				Id: reassignedTask.ID.String(),
@@ -140,13 +153,23 @@ func (s *TaskTrackerService) TasksShuffleReasign(
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(ctx, cudEvents...); err != nil {
-			log.Errorf("failed send event for random reassigned tasks: %s", err.Error())
+		if err := s.producerCUDEvents.Send(ctx, events...); err != nil {
+			log.Errorf("failed send cud events for random reassigned tasks: %s", err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent cud event (random tasks reassigned)!")
+		log.Debugf("success sent cud events (random tasks reassigned)!")
+	}()
+
+	go func() {
+		if err := s.producerBusinessEvents.Send(ctx, events...); err != nil {
+			log.Errorf("failed send business events for random reassigned tasks: %s", err.Error())
+
+			return
+		}
+
+		log.Debugf("success sent business events (random tasks reassigned)!")
 	}()
 
 	return &pbV1Tasks.TasksShuffleReasignResponse{
@@ -191,7 +214,7 @@ func (s *TaskTrackerService) TaskComplete(
 		)
 	}
 
-	cudEvent := &pbV1TaskEvents.TaskEvent{
+	event := &pbV1TaskEvents.TaskEvent{
 		EventType: pbV1TaskEvents.TaskCUDEventType_TASK_CUD_EVENT_TYPE_COMPLETED,
 		Task: &pbV1Task.TaskWithID{
 			Id: task.ID.String(),
@@ -205,13 +228,23 @@ func (s *TaskTrackerService) TaskComplete(
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(ctx, cudEvent); err != nil {
-			log.Errorf("failed send event for complete task %q: %s", cudEvent, err.Error())
+		if err := s.producerCUDEvents.Send(ctx, event); err != nil {
+			log.Errorf("failed send cud event for completed task %q: %s", event, err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent cud event (task copleted): %v", cudEvent)
+		log.Debugf("success sent cud event (task completed): %v", event)
+	}()
+
+	go func() {
+		if err := s.producerBusinessEvents.Send(ctx, event); err != nil {
+			log.Errorf("failed send business event for random reassigned tasks: %s", err.Error())
+
+			return
+		}
+
+		log.Debugf("success sent business event (random tasks completed)!")
 	}()
 
 	return &pbV1Tasks.TaskCompleteResponse{}, nil
