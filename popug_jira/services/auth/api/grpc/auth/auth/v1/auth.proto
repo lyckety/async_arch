@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package auth.v1;
 
-option go_package = "github.com/lyckety/async_arch/services/popug_jira/services/auth/pkg/grpc/auth/v1;auth";
-
 service AuthService {
     rpc UserLogin(UserLoginRequest) returns (UserLoginResponse) {};
 }
