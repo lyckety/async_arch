@@ -113,23 +113,15 @@ func (p *MBProducer) SendMessages(ctx context.Context, msgs ...kafka.Message) er
 			}
 		}
 
-		logrus.Errorf(
-			"Producer failed send message: Key: %q, Value: %q, Topic: %q, Date: %s",
-			msgs[0].Key,
-			msgs[0].Value,
-			msgs[0].Topic,
-			msgs[0].Time,
+		logrus.Error(
+			"Producer failed send messages",
 		)
 
 		return fmt.Errorf("p.producer.WriteMessages(...): %w", err)
 	}
 
-	logrus.Debugf(
-		"Producer success send message: Key: %q, Value: %q, Topic: %q, Date: %s",
-		msgs[0].Key,
-		msgs[0].Value,
-		msgs[0].Topic,
-		msgs[0].Time,
+	logrus.Debug(
+		"Producer success send messages",
 	)
 
 	return nil

@@ -28,7 +28,7 @@ func (c ContextKeyType) String() string {
 type ExtendedClaims struct {
 	jwt.StandardClaims
 	Username string `json:"username"`
-	ID       string `json:"id"`
+	PublicID string `json:"id"`
 	Role     string `json:"role"`
 }
 
@@ -46,7 +46,7 @@ func JWTUnary(
 	switch info.FullMethod {
 	case "/tasktracker.v1.TaskTrackerService/CreateTask":
 		// Новые таски может создавать кто угодно (администратор, начальник, разработчик, менеджер и любая другая роль).
-	case "/tasktracker.v1.TaskTrackerService/RandomReassignOpenedTasks":
+	case "/tasktracker.v1.TaskTrackerService/TasksShuffleReasign":
 		if claims.Role != string(domain.AdministratorRole) && claims.Role != string(domain.ManagerRole) {
 			return nil, fmt.Errorf("unathorized access")
 		}
@@ -57,7 +57,7 @@ func JWTUnary(
 		}
 	}
 
-	userID := claims.ID
+	userID := claims.PublicID
 
 	ctx = context.WithValue(ctx, ContextKeyUserID, userID) //nolint: staticcheck
 
