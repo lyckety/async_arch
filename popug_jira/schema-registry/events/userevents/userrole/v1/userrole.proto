@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package userevents.userrole.v1;
+
+enum UserRole {
+    USER_ROLE_UNSPECIFIED = 0;
+    USER_ROLE_ADMIN = 1;
+    USER_ROLE_BOOKKEEPER = 2;
+    USER_ROLE_MANAGER = 3;
+    USER_ROLE_WORKER = 4;
+}

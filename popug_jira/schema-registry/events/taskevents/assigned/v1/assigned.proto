@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package taskevents.assigned.v1;
+
+import "eventheaders/header/v1/header.proto";
+
+message Event {
+    eventheaders.header.v1.Header header = 1;
+    Data data = 2;
+}
+
+message Data{
+    string public_id = 1;
+    string worker_public_id = 2;
+}
