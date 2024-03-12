@@ -10,7 +10,6 @@ import (
 	"github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/db/domain"
 	pbV1Task "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/api/grpc/task/v1"
 	pbV1Tasks "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/api/grpc/tasktracker/v1"
-	pbV1TaskEvents "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/grpc/taskevents/v1"
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"
@@ -22,14 +21,14 @@ type TaskTrackerService struct {
 
 	dbIns domain.Repository
 
-	producerCUDEvents      *tasksEvents.TaskCUDEventSender
-	producerBusinessEvents *tasksEvents.TaskCUDEventSender
+	producerCUDEvents      *tasksEvents.TaskEventSender
+	producerBusinessEvents *tasksEvents.TaskEventSender
 }
 
 func New(
 	db domain.Repository,
-	cudSender *tasksEvents.TaskCUDEventSender,
-	businessSender *tasksEvents.TaskCUDEventSender,
+	cudSender *tasksEvents.TaskEventSender,
+	businessSender *tasksEvents.TaskEventSender,
 ) *TaskTrackerService {
 	return &TaskTrackerService{
 		dbIns:                  db,
@@ -80,33 +79,37 @@ func (s *TaskTrackerService) TaskCreate(
 		Status:       pbV1Task.TaskStatus_TASK_STATUS_OPENED,
 	}
 
-	eventsMsg := &pbV1TaskEvents.TaskEvent{
-		EventType: pbV1TaskEvents.TaskCUDEventType_TASK_CUD_EVENT_TYPE_CREATED,
-		Task: &pbV1Task.TaskWithID{
-			Id:   string(createdTask.PublicID.String()),
-			Task: rpcTaskInfo,
-		},
-		Timestamp: newTaskDB.CreatedAt.Unix(),
-	}
-
 	go func() {
-		if err := s.producerCUDEvents.Send(ctx, eventsMsg); err != nil {
+		eventCUDMsg := tasksEvents.NewTaskCreatedV1(
+			createdTask.PublicID,
+			createdTask.UserID,
+			createdTask.Description,
+			createdTask.CreatedAt.Unix(),
+		)
+
+		if err := s.producerCUDEvents.Send(context.Background(), eventCUDMsg); err != nil {
 			log.Errorf("failed send cud event for create task %v: %s", rpcTaskInfo, err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent cud event (created task): %v!", eventsMsg)
+		log.Debugf("success sent cud event (created task): %v!", eventCUDMsg)
 	}()
 
 	go func() {
-		if err := s.producerBusinessEvents.Send(ctx, eventsMsg); err != nil {
+		eventBEMsg := tasksEvents.NewTaskAssignedV1(
+			createdTask.PublicID,
+			createdTask.UserID,
+			createdTask.CreatedAt.Unix(),
+		)
+
+		if err := s.producerBusinessEvents.Send(context.Background(), eventBEMsg); err != nil {
 			log.Errorf("failed send business event for create task %v: %s", rpcTaskInfo, err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent business event (created task): %v!", eventsMsg)
+		log.Debugf("success sent business event (assigned task): %v!", eventBEMsg)
 	}()
 
 	return &pbV1Tasks.TaskCreateResponse{
@@ -127,50 +130,35 @@ func (s *TaskTrackerService) TasksShuffleReasign(
 	}
 
 	rpcResponse := make([]*pbV1Tasks.TaskIDAndAssignedUserID, len(tasksToUsers))
-	events := make([]*pbV1TaskEvents.TaskEvent, len(tasksToUsers))
+	events := make([]interface{}, len(tasksToUsers))
 
 	cnt := 0
-	for reassignedTask := range tasksToUsers {
+	for _, reassignedTask := range tasksToUsers {
 		rpcResponse[cnt] = &pbV1Tasks.TaskIDAndAssignedUserID{
 			TaskId:         reassignedTask.ID.String(),
 			AssignedUserId: reassignedTask.UserID.String(),
 		}
 
-		events[cnt] = &pbV1TaskEvents.TaskEvent{
-			EventType: pbV1TaskEvents.TaskCUDEventType_TASK_CUD_EVENT_TYPE_ASSIGNED,
-			Task: &pbV1Task.TaskWithID{
-				Id: reassignedTask.ID.String(),
-				Task: &pbV1Task.Task{
-					Description:  reassignedTask.Description,
-					AssignedUser: reassignedTask.UserID.String(),
-					Status:       pbV1Task.TaskStatus_TASK_STATUS_OPENED,
-				},
-			},
-			Timestamp: reassignedTask.UpdatedAt.Unix(),
-		}
+		events[cnt] = tasksEvents.NewTaskAssignedV1(
+			reassignedTask.PublicID,
+			reassignedTask.UserID,
+			reassignedTask.UpdatedAt.Unix(),
+		)
 
 		cnt++
 	}
 
-	go func() {
-		if err := s.producerCUDEvents.Send(ctx, events...); err != nil {
-			log.Errorf("failed send cud events for random reassigned tasks: %s", err.Error())
+	if len(events) > 0 {
+		go func() {
+			if err := s.producerBusinessEvents.Send(context.Background(), events...); err != nil {
+				log.Errorf("failed send business events for random reassigned tasks: %s", err.Error())
 
-			return
-		}
+				return
+			}
 
-		log.Debugf("success sent cud events (random tasks reassigned)!")
-	}()
-
-	go func() {
-		if err := s.producerBusinessEvents.Send(ctx, events...); err != nil {
-			log.Errorf("failed send business events for random reassigned tasks: %s", err.Error())
-
-			return
-		}
-
-		log.Debugf("success sent business events (random tasks reassigned)!")
-	}()
+			log.Debugf("success sent business events (random tasks reassigned)!")
+		}()
+	}
 
 	return &pbV1Tasks.TasksShuffleReasignResponse{
 			TaskToAssignedUser: rpcResponse,
@@ -182,7 +170,7 @@ func (s *TaskTrackerService) TaskComplete(
 	ctx context.Context,
 	req *pbV1Tasks.TaskCompleteRequest,
 ) (*pbV1Tasks.TaskCompleteResponse, error) {
-	userID := ctx.Value(interceptors.ContextKeyUserID.String()).(string)
+	userID := ctx.Value(interceptors.ContextKeyUserID).(string)
 
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
@@ -204,7 +192,7 @@ func (s *TaskTrackerService) TaskComplete(
 		)
 	}
 
-	task, err := s.dbIns.TaskCompleteByUser(ctx, userUUID, taskUUID)
+	task, err := s.dbIns.TaskCompleteByUser(context.Background(), userUUID, taskUUID)
 	if err != nil {
 		log.Errorf("TaskComplete(...): task id must be uuid: %s", err.Error())
 
@@ -214,31 +202,14 @@ func (s *TaskTrackerService) TaskComplete(
 		)
 	}
 
-	event := &pbV1TaskEvents.TaskEvent{
-		EventType: pbV1TaskEvents.TaskCUDEventType_TASK_CUD_EVENT_TYPE_COMPLETED,
-		Task: &pbV1Task.TaskWithID{
-			Id: task.ID.String(),
-			Task: &pbV1Task.Task{
-				Description:  task.Description,
-				AssignedUser: task.UserID.String(),
-				Status:       pbV1Task.TaskStatus_TASK_STATUS_COMPLETED,
-			},
-		},
-		Timestamp: task.UpdatedAt.Unix(),
-	}
+	eventsMsg := tasksEvents.NewTaskCompletedV1(
+		task.PublicID,
+		task.UserID,
+		task.UpdatedAt.Unix(),
+	)
 
 	go func() {
-		if err := s.producerCUDEvents.Send(ctx, event); err != nil {
-			log.Errorf("failed send cud event for completed task %q: %s", event, err.Error())
-
-			return
-		}
-
-		log.Debugf("success sent cud event (task completed): %v", event)
-	}()
-
-	go func() {
-		if err := s.producerBusinessEvents.Send(ctx, event); err != nil {
+		if err := s.producerBusinessEvents.Send(context.Background(), eventsMsg); err != nil {
 			log.Errorf("failed send business event for random reassigned tasks: %s", err.Error())
 
 			return

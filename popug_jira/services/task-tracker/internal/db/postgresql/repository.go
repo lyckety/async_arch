@@ -119,8 +119,8 @@ func (i *Instance) GetAllTasksByUserAndStatus(
 
 func (i *Instance) RandomlyUpdateAssignedOpenedTasks(
 	ctx context.Context,
-) (map[*domain.Task]*domain.User, error) {
-	updatedTasks := make(map[*domain.Task]*domain.User)
+) ([]domain.Task, error) {
+	var updatedTasks []domain.Task
 
 	err := i.database.WithContext(ctx).
 		Transaction(func(tx *gorm.DB) error {
@@ -145,18 +145,20 @@ func (i *Instance) RandomlyUpdateAssignedOpenedTasks(
 				return fmt.Errorf("error get not completed tasks ids: %w", err)
 			}
 
-			for _, task := range tasksDB {
+			updatedTasks = make([]domain.Task, len(tasksDB))
+
+			for i, task := range tasksDB {
 				newWorker := workersDB[rand.Intn(len(workersDB))]
 				task.UserID = newWorker.ID
 
-				if err := tx.Model(&domain.Task{}).
+				if err := tx.
 					Where("id = ? AND status != ?", task.ID, domain.TaskCompleted).
 					Updates(&task).Error; err != nil {
 
 					return fmt.Errorf("error assign random worker user to task: %w", err)
 				}
 
-				updatedTasks[&task] = &newWorker
+				updatedTasks[i] = task
 			}
 
 			return nil

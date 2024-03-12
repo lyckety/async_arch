@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package eventheaders.header.v1;
+
+message Header{
+    string event_id = 1;
+    string event_version = 2;
+    string event_name = 3;
+    int64 event_time = 4;
+    string event_producer = 5;
+}

@@ -14,7 +14,7 @@ type Repository interface {
 type TaskRepository interface {
 	CreateTask(context.Context, *Task) (*Task, error)
 	TaskCompleteByUser(ctx context.Context, userID uuid.UUID, taskID uuid.UUID) (*Task, error)
-	RandomlyUpdateAssignedOpenedTasks(ctx context.Context) (map[*Task]*User, error)
+	RandomlyUpdateAssignedOpenedTasks(ctx context.Context) ([]Task, error)
 	GetAllTasksByUserAndStatus(
 		ctx context.Context,
 		userID uuid.UUID,

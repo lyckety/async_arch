@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package userevents.created.v1;
+
+import "eventheaders/header/v1/header.proto";
+import "userevents/userrole/v1/userrole.proto";
+
+message Event {
+    eventheaders.header.v1.Header header = 1;
+    Data data = 2;
+}
+
+message Data{
+    string public_id = 1;
+    string username = 2;
+    string first_name = 3;
+    string last_name = 4;
+    string email = 5;
+    userevents.userrole.v1.UserRole role = 6;
+}

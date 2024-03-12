@@ -8,7 +8,6 @@ import (
 	"github.com/lyckety/async_arch/popug_jira/services/auth/internal/db/domain"
 	pbV1User "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/api/grpc/user/v1"
 	pbV1Users "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/api/grpc/users/v1"
-	pbV1Events "github.com/lyckety/async_arch/popug_jira/services/auth/pkg/grpc/authevents/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,10 +19,10 @@ type UsersService struct {
 	pbV1Users.UnimplementedUsersServiceServer
 
 	dbIns          domain.Repository
-	producerEvents *events.CUDEventSender
+	producerEvents *events.UserCUDEventSender
 }
 
-func New(db domain.Repository, cudEventSender *events.CUDEventSender) *UsersService {
+func New(db domain.Repository, cudEventSender *events.UserCUDEventSender) *UsersService {
 	return &UsersService{
 		dbIns:          db,
 		producerEvents: cudEventSender,
@@ -62,24 +61,24 @@ func (s *UsersService) CreateUser(
 		)
 	}
 
-	eventsMsg := &pbV1Events.AuthEvent{
-		EventType: pbV1Events.AuthCUDEventType_AUTH_CUD_EVENT_TYPE_CREATE,
-		User: &pbV1User.UserWithID{
-			Id:   createdUser.PublicID.String(),
-			User: req.GetUser(),
-		},
-
-		Timestamp: userDB.CreatedAt.Unix(),
+	eventInfo := events.CreatedUserV1{
+		EventTime: createdUser.CreatedAt.Unix(),
+		PublicID:  createdUser.PublicID,
+		Username:  createdUser.Username,
+		FirstName: createdUser.FirstName,
+		LastName:  createdUser.LastName,
+		Role:      string(createdUser.Role),
+		Email:     createdUser.Email,
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(context.Background(), eventsMsg); err != nil {
+		if err := s.producerEvents.Send(context.Background(), eventInfo); err != nil {
 			log.Errorf("failed send event for create or update user %v: %s", req.User, err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent cud event (user created): %v", eventsMsg)
+		log.Debugf("success sent cud event (user created): %v", eventInfo)
 	}()
 
 	return &pbV1Users.CreateUserResponse{Id: createdUser.PublicID.String()}, nil
@@ -116,24 +115,24 @@ func (s *UsersService) UpdateUser(
 		)
 	}
 
-	eventsMsg := &pbV1Events.AuthEvent{
-		EventType: pbV1Events.AuthCUDEventType_AUTH_CUD_EVENT_TYPE_UPDATE,
-		User: &pbV1User.UserWithID{
-			Id:   updatedUser.PublicID.String(),
-			User: req.GetUser(),
-		},
-
-		Timestamp: userDB.UpdatedAt.Unix(),
+	eventInfo := events.UpdatedUserV1{
+		EventTime: updatedUser.CreatedAt.Unix(),
+		PublicID:  updatedUser.PublicID,
+		Username:  updatedUser.Username,
+		FirstName: updatedUser.FirstName,
+		LastName:  updatedUser.LastName,
+		Role:      string(updatedUser.Role),
+		Email:     updatedUser.Email,
 	}
 
 	go func() {
-		if err := s.producerEvents.Send(context.Background(), eventsMsg); err != nil {
+		if err := s.producerEvents.Send(context.Background(), eventInfo); err != nil {
 			log.Errorf("failed send event for create or update user %v: %s", req.User, err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent cud event (user updated): %v", eventsMsg)
+		log.Debugf("success sent cud event (user updated): %v", eventInfo)
 	}()
 
 	return &pbV1Users.UpdateUserResponse{Id: updatedUser.PublicID.String()}, nil

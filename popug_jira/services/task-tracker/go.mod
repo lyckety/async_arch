@@ -1,16 +1,20 @@
 module github.com/lyckety/async_arch/popug_jira/services/task-tracker
 
-go 1.21
+go 1.21.4
+
+replace github.com/lyckety/async_arch/popug_jira/schema-registry => ../../schema-registry/go
 
 require (
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/google/uuid v1.3.0
 	github.com/ilyakaznacheev/cleanenv v1.4.2
+	github.com/lyckety/async_arch/popug_jira/schema-registry v0.0.0-00010101000000-000000000000
 	github.com/segmentio/kafka-go v0.4.42
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/sync v0.2.0
 	google.golang.org/grpc v1.57.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.33.0
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.2
 )
