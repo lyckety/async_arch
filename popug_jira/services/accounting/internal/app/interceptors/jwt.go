@@ -1,0 +1,107 @@
+package interceptors
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/golang-jwt/jwt"
+	"github.com/lyckety/async_arch/popug_jira/services/accounting/internal/db/domain"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+)
+
+const (
+	jwtSecretKey = "09876543210"
+)
+
+type ContextKeyType string
+
+const ContextKeyUserID ContextKeyType = "user_id"
+const ContextKeyUserRole ContextKeyType = "user_role"
+
+func (c ContextKeyType) String() string {
+	return string(c)
+}
+
+type ExtendedClaims struct {
+	jwt.StandardClaims
+	Username string `json:"username"`
+	PublicID string `json:"id"`
+	Role     string `json:"role"`
+}
+
+func JWTUnary(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (interface{}, error) {
+	claims, err := validateJWTToken(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error validate jwt token: %w", err)
+	}
+
+	switch info.FullMethod {
+	case "/accounting.v1.AccountingService/ShowCurrentBalance":
+		// показывает баланс всех пользователей
+	case "/accounting.v1.AccountingService/ShowTransactionLog":
+		// для воркера должен показывать только собственный лог, для админов, бухгалтеров - весь лог
+	case "/tasktracker.v1.TaskTrackerService/TaskComplete",
+		"/tasktracker.v1.TaskTrackerService/GetListOpenedTasksForMe":
+		if claims.Role != string(domain.WorkerRole) {
+			return nil, fmt.Errorf("unathorized access")
+		}
+	default:
+		return nil, fmt.Errorf("unathorized access: unknown method %s", info.FullMethod)
+	}
+
+	userID := claims.PublicID
+
+	ctx = context.WithValue(ctx, ContextKeyUserID, userID) //nolint: staticcheck
+
+	return handler(ctx, req)
+}
+
+func validateJWTToken(ctx context.Context) (ExtendedClaims, error) {
+	secretKey := []byte(jwtSecretKey)
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return ExtendedClaims{}, status.Errorf(codes.Unauthenticated, "metadata is not provided")
+	}
+
+	authHeader := md["authorization"]
+	if len(authHeader) == 0 {
+		return ExtendedClaims{}, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
+	}
+
+	// The authHeader should be in the format `Bearer <token>`
+	splitToken := strings.Split(authHeader[0], " ")
+	if len(splitToken) != 2 || strings.ToLower(splitToken[0]) != "bearer" {
+		return ExtendedClaims{}, status.Errorf(codes.Unauthenticated, "authorization token format is invalid")
+	}
+
+	tokenStr := splitToken[1]
+
+	claims := &ExtendedClaims{}
+
+	tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return secretKey, nil
+	})
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid {
+			return ExtendedClaims{}, fmt.Errorf("invalid token signature: %w", err)
+		}
+
+		return ExtendedClaims{}, fmt.Errorf("invalid token: %w", err)
+	}
+
+	if !tkn.Valid {
+		return ExtendedClaims{}, fmt.Errorf("invalid token: %w", err)
+	}
+
+	return *claims, nil
+}
