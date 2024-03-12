@@ -1,0 +1,9 @@
+**
+
+!/cmd/
+!/internal/
+!/migrations/
+!/pkg/
+!go.mod
+!go.sum
+!Makefile
