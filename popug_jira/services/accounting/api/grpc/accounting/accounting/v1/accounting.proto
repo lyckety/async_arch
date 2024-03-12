@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package accounting.v1;
+
+import "transaction/v1/transaction.proto";
+
+service AccountingService {
+    rpc ShowCurrentBalance(ShowCurrentBalanceRequest) returns (ShowCurrentBalanceResponse) {}
+    rpc ShowTransactionLog(ShowTransactionLogRequest) returns (ShowTransactionLogResponse) {}
+}
+
+message ShowCurrentBalanceRequest {}
+
+message ShowCurrentBalanceResponse {
+    int64 balance = 1;
+}
+
+message ShowTransactionLogRequest{
+    FilterTransactionLog filter = 1;
+}
+
+message ShowTransactionLogResponse{
+    repeated transaction.v1.Transaction transactions = 1;
+}
+
+message FilterTransactionLog {
+    transaction.v1.TransactionType by_type = 1;
+    FilterByDateTime by_date_time = 2;
+}
+
+message FilterByDateTime {
+    int64 start_from = 1;
+    int64 end_to = 2;
+}

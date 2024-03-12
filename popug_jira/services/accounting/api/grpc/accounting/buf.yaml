@@ -1,0 +1,8 @@
+version: v1
+name: buf.build/lyckety/accounting-api
+breaking:
+  use:
+    - WIRE_JSON
+lint:
+  use:
+    - DEFAULT
