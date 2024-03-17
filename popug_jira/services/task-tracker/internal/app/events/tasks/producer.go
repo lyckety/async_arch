@@ -64,6 +64,20 @@ func (s *TaskEventSender) Send(
 
 			kafkaMsg.Key = []byte(e.PublicID.String())
 			kafkaMsg.Time = time.Unix(e.EventTime, 0)
+		case *TaskCreatedV2:
+			logrus.Debug("Start processing write event TaskCreatedV2")
+			e, ok := event.(*TaskCreatedV2)
+			if !ok {
+				return fmt.Errorf("%w TaskCreatedV2", ErrToType)
+			}
+
+			pbMsg, err = e.ToPB()
+			if err != nil {
+				return fmt.Errorf("error convert TaskCreatedV2 to protobuf event: %w", err)
+			}
+
+			kafkaMsg.Key = []byte(e.PublicID.String())
+			kafkaMsg.Time = time.Unix(e.EventTime, 0)
 		case *TaskAssignedV1:
 			logrus.Debug("Start processing write event TaskAssignedV1")
 			e, ok := event.(*TaskAssignedV1)
