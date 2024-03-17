@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	pbV1TaskCreated "github.com/lyckety/async_arch/popug_jira/schema-registry/pkg/pb/taskevents/created/v1"
+	pbV2TaskCreated "github.com/lyckety/async_arch/popug_jira/schema-registry/pkg/pb/taskevents/created/v2"
 	mbCons "github.com/lyckety/async_arch/popug_jira/services/analytics/internal/mb/consumer"
 	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
@@ -71,10 +72,19 @@ func (p *TasksStreamProcessor) StartProcessMessages(ctx context.Context) {
 	}
 }
 
-func (p *TasksStreamProcessor) processMessage(ctx context.Context, msg kafka.Message) error {
+func (p *TasksStreamProcessor) processMessage(_ context.Context, msg kafka.Message) error {
 	switch pbData := getUnmarshalledPbEventFromBinary(msg.Value).(type) {
 	case *pbV1TaskCreated.Event:
-		logrus.Infof("============== Fetched TASKS stream event (credited): %v ==============", pbData)
+		logrus.Infof("============== Fetched TASKS stream event (created) version 1: %v ==============", pbData)
+
+		return nil
+	case *pbV2TaskCreated.Event:
+		logrus.Infof("============== Fetched TASKS stream event (created) version 2: %v ==============", pbData)
+
+		// TODO: пока просто вывожу в консоль если  jira id и title некорректные
+		if err := validateJiraIDAndTitle(pbData.GetData().GetJiraId(), pbData.GetData().GetDescription()); err != nil {
+			logrus.Errorf("validate jira id and title in pbV2TaskCreated: %s", err.Error())
+		}
 
 		return nil
 	default:
