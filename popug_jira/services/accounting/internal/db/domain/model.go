@@ -15,6 +15,7 @@ type Task struct {
 	CostComplete int `gorm:"not null"`
 
 	Description string
+	JiraId      string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -89,6 +90,7 @@ func (Transaction) TableName() string {
 type TransactionWithDescriptionTask struct {
 	Transaction
 	TaskDescription string
+	TaskJiraId      string
 }
 
 type BillingCycleStatus string

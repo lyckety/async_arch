@@ -110,6 +110,7 @@ func (s *AccountingService) ShowTransactionLog(
 			Debit:           uint32(tx.Debit),
 			Credit:          uint32(tx.Credit),
 			TaskDescription: tx.TaskDescription,
+			TaskJiraId:      tx.TaskJiraId,
 			Time:            tx.DateTime.Unix(),
 		}
 

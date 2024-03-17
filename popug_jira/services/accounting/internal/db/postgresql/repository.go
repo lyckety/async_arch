@@ -28,6 +28,10 @@ func (i *Instance) CreateOrUpdateTask(ctx context.Context, task *domain.Task) (u
 		updatedColumns = append(updatedColumns, "description")
 	}
 
+	if strings.ReplaceAll(task.JiraId, " ", "") != "" {
+		updatedColumns = append(updatedColumns, "jira_id")
+	}
+
 	err := i.database.
 		WithContext(
 			ctx,
@@ -160,15 +164,21 @@ func (i *Instance) GetTransactions(
 	transactionType domain.TransactionType,
 ) ([]domain.TransactionWithDescriptionTask, error) {
 	var tx domain.Transaction
+	var taskDB domain.Task
+
 	var transactions []domain.TransactionWithDescriptionTask
 
 	query := i.database.WithContext(ctx).
 		Table(tx.TableName()).
 		Select(
-			fmt.Sprintf("%s.*, tasks.description as task_description", tx.TableName()),
+			fmt.Sprintf("%s.*, %s.description as task_description, %s.jira_id as jira_id",
+				tx.TableName(),
+				taskDB.TableName(),
+				taskDB.TableName(),
+			),
 		).
 		Joins(
-			fmt.Sprintf("left join tasks on %s.task_public_id = tasks.public_id", tx.TableName()),
+			fmt.Sprintf("left join tasks on %s.task_public_id = %s.public_id", tx.TableName(), taskDB.TableName()),
 		).
 		Where(
 			fmt.Sprintf(

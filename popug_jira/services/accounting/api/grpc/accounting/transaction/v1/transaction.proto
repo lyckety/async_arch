@@ -10,6 +10,7 @@ message Transaction {
     uint32 credit = 5;
     string task_description = 6;
     int64 time = 7;
+    string task_jira_id = 8;
 
 }
 
