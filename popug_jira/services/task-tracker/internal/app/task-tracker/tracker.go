@@ -210,12 +210,12 @@ func (s *TaskTrackerService) TaskComplete(
 
 	go func() {
 		if err := s.producerBusinessEvents.Send(context.Background(), eventsMsg); err != nil {
-			log.Errorf("failed send business event for random reassigned tasks: %s", err.Error())
+			log.Errorf("failed send business event completed task: %s", err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent business event (random tasks completed)!")
+		log.Debugf("success sent business event (tasks completed)!")
 	}()
 
 	return &pbV1Tasks.TaskCompleteResponse{}, nil
