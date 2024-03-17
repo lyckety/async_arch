@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package taskevents.created.v2;
+
+import "eventheaders/header/v1/header.proto";
+
+message Event {
+    eventheaders.header.v1.Header header = 1;
+    Data data = 2;
+}
+
+message Data{
+    string public_id = 1;
+    string description = 2;
+    string jira_id = 3;
+    string worker_public_id = 4;
+}
