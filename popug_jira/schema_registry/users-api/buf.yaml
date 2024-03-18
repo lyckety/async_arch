@@ -1,8 +1,0 @@
-version: v1
-name: buf.build/lyckety/users-api
-breaking:
-  use:
-    - WIRE_JSON
-lint:
-  use:
-    - DEFAULT

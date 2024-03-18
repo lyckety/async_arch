@@ -1,6 +1,0 @@
-version: v1
-directories:
-  - auth-api
-  - cud-events
-  - users-api
-  - task-tracker-api
