@@ -21,8 +21,10 @@ type Task struct {
 
 	UserID uuid.UUID `gorm:"type:uuid"`
 
-	Description string     `gorm:"not null"`
-	Status      TaskStatus `gorm:"not null;default:opened"`
+	JiraId      string `gorm:"not null"`
+	Description string `gorm:"not null"`
+
+	Status TaskStatus `gorm:"not null;default:opened"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

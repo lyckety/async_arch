@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	mbProd "github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/mb/producer"
+	mbProd "github.com/lyckety/async_arch/popug_jira/services/accounting/internal/mb/producer"
 	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
@@ -17,15 +17,15 @@ var (
 	ErrToType = errors.New("failed convert to type")
 )
 
-type TaskEventSender struct {
+type TxEventSender struct {
 	client *mbProd.MBProducer
 
 	topic     string
 	partition int
 }
 
-func New(brokerURLs []string, topic string, partition int) *TaskEventSender {
-	sender := &TaskEventSender{
+func New(brokerURLs []string, topic string, partition int) *TxEventSender {
+	sender := &TxEventSender{
 		client:    mbProd.New(brokerURLs),
 		topic:     topic,
 		partition: partition,
@@ -34,7 +34,7 @@ func New(brokerURLs []string, topic string, partition int) *TaskEventSender {
 	return sender
 }
 
-func (s *TaskEventSender) Send(
+func (s *TxEventSender) Send(
 	ctx context.Context,
 	events ...interface{},
 ) error {
@@ -50,58 +50,44 @@ func (s *TaskEventSender) Send(
 		}
 
 		switch et := event.(type) {
-		case *TaskCreatedV1:
-			logrus.Debug("Start processing write event TaskCreatedV1")
-			e, ok := event.(*TaskCreatedV1)
+		case *TxDebitedV1:
+			logrus.Debug("Start processing write event TxDebitedV1")
+			e, ok := event.(*TxDebitedV1)
 			if !ok {
-				return fmt.Errorf("%w TaskCreatedV1", ErrToType)
+				return fmt.Errorf("%w TxDebitedV1", ErrToType)
 			}
 
 			pbMsg, err = e.ToPB()
 			if err != nil {
-				return fmt.Errorf("error convert TaskCreatedV1 to protobuf event: %w", err)
+				return fmt.Errorf("error convert TxDebitedV1 to protobuf event: %w", err)
 			}
 
 			kafkaMsg.Key = []byte(e.PublicID.String())
 			kafkaMsg.Time = time.Unix(e.EventTime, 0)
-		case *TaskCreatedV2:
-			logrus.Debug("Start processing write event TaskCreatedV2")
-			e, ok := event.(*TaskCreatedV2)
+		case *TxCreditedV1:
+			logrus.Debug("Start processing write event TxCreditedV1")
+			e, ok := event.(*TxCreditedV1)
 			if !ok {
-				return fmt.Errorf("%w TaskCreatedV2", ErrToType)
+				return fmt.Errorf("%w TxCreditedV1", ErrToType)
 			}
 
 			pbMsg, err = e.ToPB()
 			if err != nil {
-				return fmt.Errorf("error convert TaskCreatedV2 to protobuf event: %w", err)
+				return fmt.Errorf("error convert TxCreditedV1 to protobuf event: %w", err)
 			}
 
 			kafkaMsg.Key = []byte(e.PublicID.String())
 			kafkaMsg.Time = time.Unix(e.EventTime, 0)
-		case *TaskAssignedV1:
-			logrus.Debug("Start processing write event TaskAssignedV1")
-			e, ok := event.(*TaskAssignedV1)
+		case *TxPaymentedV1:
+			logrus.Debug("Start processing write event TxPaymentedV1")
+			e, ok := event.(*TxPaymentedV1)
 			if !ok {
-				return fmt.Errorf("%w TaskAssignedV1", ErrToType)
+				return fmt.Errorf("%w TxPaymentedV1", ErrToType)
 			}
 
 			pbMsg, err = e.ToPB()
 			if err != nil {
-				return fmt.Errorf("error convert TaskAssignedV1 to protobuf event: %w", err)
-			}
-
-			kafkaMsg.Key = []byte(e.PublicID.String())
-			kafkaMsg.Time = time.Unix(e.EventTime, 0)
-		case *TaskCompletedV1:
-			logrus.Debug("Start processing write event TaskCompletedV1")
-			e, ok := event.(*TaskCompletedV1)
-			if !ok {
-				return fmt.Errorf("%w TaskCompletedV1", ErrToType)
-			}
-
-			pbMsg, err = e.ToPB()
-			if err != nil {
-				return fmt.Errorf("error convert TaskCompletedV1 to protobuf event: %w", err)
+				return fmt.Errorf("error convert TxPaymentedV1 to protobuf event: %w", err)
 			}
 
 			kafkaMsg.Key = []byte(e.PublicID.String())

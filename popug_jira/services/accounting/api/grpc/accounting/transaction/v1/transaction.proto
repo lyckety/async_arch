@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package transaction.v1;
+
+message Transaction {
+    string public_id = 1; // uuid
+    string user_id = 2; // uuid
+    TransactionType type = 3;
+    uint32 debit = 4;
+    uint32 credit = 5;
+    string task_description = 6;
+    int64 time = 7;
+    string task_jira_id = 8;
+
+}
+
+enum TransactionType {
+    TRANSACTION_TYPE_UNSPECIFIED = 0;
+    TRANSACTION_TYPE_UNKNOWN = 1;
+    TRANSACTION_TYPE_ASSIGNED = 2;
+    TRANSACTION_TYPE_COMPLETED = 3;
+    TRANSACTION_TYPE_PAYMENT = 4;
+}

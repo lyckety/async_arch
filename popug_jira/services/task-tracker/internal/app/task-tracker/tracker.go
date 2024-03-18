@@ -1,11 +1,14 @@
 package producer
 
+// TODO: name package
+
 import (
 	"context"
 	"math/rand"
 
 	"github.com/google/uuid"
 	tasksEvents "github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/app/events/tasks"
+	"github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/app/helpers"
 	"github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/app/interceptors"
 	"github.com/lyckety/async_arch/popug_jira/services/task-tracker/internal/db/domain"
 	pbV1Task "github.com/lyckety/async_arch/popug_jira/services/task-tracker/pkg/api/grpc/task/v1"
@@ -41,8 +44,18 @@ func (s *TaskTrackerService) TaskCreate(
 	ctx context.Context,
 	req *pbV1Tasks.TaskCreateRequest,
 ) (*pbV1Tasks.TaskCreateResponse, error) {
+	jiraID, title := helpers.ParseTaskDescription(req.GetDescription())
+
+	if err := helpers.ValidateJiraIDAndTitle(jiraID, title); err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"error create task %v: validate jira id and title: %s: valid [<jira_id>]: <some_title>", req, err.Error(),
+		)
+	}
+
 	newTaskDB := &domain.Task{
-		Description: req.GetDescription(),
+		Description: title,
+		JiraId:      jiraID,
 		Status:      domain.TaskOpened,
 	}
 
@@ -80,20 +93,28 @@ func (s *TaskTrackerService) TaskCreate(
 	}
 
 	go func() {
-		eventCUDMsg := tasksEvents.NewTaskCreatedV1(
+		// eventCUDMsgV1 := tasksEvents.NewTaskCreatedV1(
+		// 	createdTask.PublicID,
+		// 	createdTask.UserID,
+		// 	createdTask.Description,
+		// 	createdTask.CreatedAt.Unix(),
+		// )
+
+		eventCUDMsgV2 := tasksEvents.NewTaskCreatedV2(
 			createdTask.PublicID,
 			createdTask.UserID,
-			createdTask.Description,
+			title,
+			jiraID,
 			createdTask.CreatedAt.Unix(),
 		)
 
-		if err := s.producerCUDEvents.Send(context.Background(), eventCUDMsg); err != nil {
-			log.Errorf("failed send cud event for create task %v: %s", rpcTaskInfo, err.Error())
+		if err := s.producerCUDEvents.Send(context.Background(), eventCUDMsgV2); err != nil {
+			log.Errorf("failed send cud event for create task %v v2: %s", rpcTaskInfo, err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent cud event (created task): %v!", eventCUDMsg)
+		log.Debugf("success sent cud event (created task v2): %v!", eventCUDMsgV2)
 	}()
 
 	go func() {
@@ -210,12 +231,12 @@ func (s *TaskTrackerService) TaskComplete(
 
 	go func() {
 		if err := s.producerBusinessEvents.Send(context.Background(), eventsMsg); err != nil {
-			log.Errorf("failed send business event for random reassigned tasks: %s", err.Error())
+			log.Errorf("failed send business event completed task: %s", err.Error())
 
 			return
 		}
 
-		log.Debugf("success sent business event (random tasks completed)!")
+		log.Debugf("success sent business event (tasks completed)!")
 	}()
 
 	return &pbV1Tasks.TaskCompleteResponse{}, nil
